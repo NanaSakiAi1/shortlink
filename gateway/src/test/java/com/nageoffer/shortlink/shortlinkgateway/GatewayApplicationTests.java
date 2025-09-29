@@ -1,10 +1,10 @@
-package com.nageoffer.shortlink.shortlinkall;
+package com.nageoffer.shortlink.shortlinkgateway;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ShortlinkApplicationTests {
+class GatewayApplicationTests {
 
     @Test
     void contextLoads() {

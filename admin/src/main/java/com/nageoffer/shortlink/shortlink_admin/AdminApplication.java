@@ -1,13 +1,13 @@
-package com.nageoffer.shortlink.shortlinkall;
+package com.nageoffer.shortlink.shortlink_admin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ShortlinkApplication {
+public class AdminApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ShortlinkApplication.class, args);
+        SpringApplication.run(AdminApplication.class, args);
     }
 
 }
