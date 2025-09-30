@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.shortlink_admin;
+package com.nageoffer.shortlink.admin;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
