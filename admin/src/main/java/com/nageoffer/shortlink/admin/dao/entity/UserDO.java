@@ -2,7 +2,6 @@ package com.nageoffer.shortlink.admin.dao.entity;
 
 
 import com.baomidou.mybatisplus.annotation.TableName;
-
 import lombok.Data;
 
 @Data
@@ -32,6 +31,7 @@ public class UserDO  {
     /**
      * 手机号
      */
+
     private String phone;
 
     /**
