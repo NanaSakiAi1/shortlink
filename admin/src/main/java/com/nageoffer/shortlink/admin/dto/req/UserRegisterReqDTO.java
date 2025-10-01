@@ -1,13 +1,13 @@
-package com.nageoffer.shortlink.admin.dao.entity;
+package com.nageoffer.shortlink.admin.dto.req;
 
-
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+/**
+ * 用户注册请求参数
+ *
+ */
 @Data
-@TableName("t_user")
-public class UserDO  {
-
+public class UserRegisterReqDTO {
     /**
      * id
      */
@@ -43,6 +43,4 @@ public class UserDO  {
      * 注销时间戳
      */
     private Long deletionTime;
-
 }
-
