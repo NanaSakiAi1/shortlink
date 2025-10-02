@@ -101,25 +101,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      */
     @Override
     public UserLoginRespDTO Login(UserLoginReqDTO reqDTO) {
-
-        LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
-                .eq(UserDO::getUsername, reqDTO.getUsername())
-                .eq(UserDO::getPassword, reqDTO.getPassword())
-                .eq(UserDO::getDelFlag,0 );
-        UserDO userDO = (UserDO) baseMapper.selectOne(queryWrapper);
-        if(userDO==  null){
+        UserDO userDO = baseMapper.selectOne(
+                Wrappers.<UserDO>lambdaQuery()
+                        .eq(UserDO::getUsername, reqDTO.getUsername())
+                        .eq(UserDO::getPassword, reqDTO.getPassword())
+                        .eq(UserDO::getDelFlag, 0)
+        );
+        if (userDO == null) {
             throw new ClientException(UserErrorCodeEnum.USER_NULL);
         }
-        Boolean hasLogin = stringRedisTemplate.hasKey( "login_"+reqDTO.getUsername());
-        if(hasLogin){
+
+        String key = "login_" + reqDTO.getUsername();
+        stringRedisTemplate.delete(key);
+        // 如果你想“同一用户只能单会话”，就先删旧会话（整个 hash）
+        // stringRedisTemplate.delete(key);
+
+        // 如果你想“允许多会话”，就不要做 hasKey 拦截，直接新增一个 field 即可
+        // 若要严格单会话，请保留 delete(key) 或判断 HLEN>0 后拒绝
+        Boolean exist = stringRedisTemplate.hasKey(key);
+        if (exist) {
             throw new ClientException("用户已登录");
         }
 
-        String uuid = UUID.randomUUID().toString();
-        stringRedisTemplate.opsForHash().put("login_"+reqDTO.getUsername(),uuid, JSON.toJSONString(userDO));
-        stringRedisTemplate.expire("login_"+reqDTO.getUsername(),30L, TimeUnit.MINUTES);
+        String token = UUID.randomUUID().toString();
 
-        return new UserLoginRespDTO(uuid);
+        stringRedisTemplate.opsForHash().put(key, token, JSON.toJSONString(userDO));
+        stringRedisTemplate.expire(key, 30, TimeUnit.MINUTES);
+
+        return new UserLoginRespDTO(token);
     }
     /**
      * 验证用户登录
