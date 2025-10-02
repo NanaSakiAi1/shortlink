@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.tollkit.RandomGenerator;
@@ -86,6 +87,26 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
         GroupDO groupDO = new GroupDO();
         groupDO.setDelFlag(1);
         baseMapper.update(groupDO, updateWrapper);
+    }
+
+    /**
+     * 短链接分组排序
+     *
+     * @param reqDTOs
+     */
+    @Override
+    public void sortGroup(List<ShortLinkGroupSortReqDTO> reqDTOs) {
+        reqDTOs.forEach(reqDTO -> {
+            GroupDO groupDO = GroupDO.builder()
+                    .gid(reqDTO.getGid()).
+                    sortOrder(reqDTO.getSortOrder())
+                    .build();
+            LambdaUpdateWrapper<GroupDO> updateWrapper = Wrappers.lambdaUpdate(GroupDO.class)
+                    .eq(GroupDO::getGid, reqDTO.getGid())
+                    .eq(GroupDO::getUsername, UserContext.getUsername())
+                    .eq(GroupDO::getDelFlag, 0);
+            baseMapper.update(groupDO, updateWrapper);
+        });
     }
 
     /**
