@@ -30,6 +30,7 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
         GroupDO groupDO = GroupDO.builder()
                 .name(GroupName)
                 .gid(RandomGenerator.generateRandom())
+                .sortOrder(0)
                 .build();
         baseMapper.insert(groupDO);
     }
