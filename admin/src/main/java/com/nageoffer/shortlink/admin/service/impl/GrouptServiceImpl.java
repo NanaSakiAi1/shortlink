@@ -73,6 +73,22 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
         baseMapper.update(groupDO, updateWrapper);
     }
     /**
+     * 删除短连接分组
+     *
+     * @param gid
+     */
+    @Override
+    public void deleteGroup(String gid) {
+        LambdaUpdateWrapper<GroupDO> updateWrapper = Wrappers.lambdaUpdate(GroupDO.class)
+                .eq(GroupDO::getGid, gid)
+                .eq(GroupDO::getUsername, UserContext.getUsername())
+                .eq(GroupDO::getDelFlag, 0);
+        GroupDO groupDO = new GroupDO();
+        groupDO.setDelFlag(1);
+        baseMapper.update(groupDO, updateWrapper);
+    }
+
+    /**
      * 判断GID是否已存在
      *
      * @param gid
