@@ -20,4 +20,10 @@ public interface GroupService extends IService<GroupDO> {
      * @return
      */
     List<ShortLinkGroupRespDTO> listGroup();
+    /**
+     * 修改短连接分组
+     * @param gid 分组ID
+     * @param name 分组名
+     */
+    void updateGroup(String gid, String name);
 }
