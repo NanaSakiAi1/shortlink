@@ -94,7 +94,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         baseMapper.update(BeanUtil.toBean(reqDTO,UserDO.class), updateWrapper);
 
     }
-
+    /**
+     * 用户登录
+     * @param reqDTO
+     * @return
+     */
     @Override
     public UserLoginRespDTO Login(UserLoginReqDTO reqDTO) {
 
@@ -126,5 +130,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     public Boolean checkLogin(String username , String token) {
 
         return stringRedisTemplate.opsForHash().get("login_"+username, token)!=null;
+    }
+    /**
+     * 用户登出
+     * @param token
+     */
+    @Override
+    public void logout(String username, String token) {
+        if(checkLogin(username,token)){
+            stringRedisTemplate.opsForHash().delete("login_"+username, token);
+            return  ;
+        }
+        throw new ClientException("用户TOKNE不存在或用户未登录");
     }
 }
