@@ -1,13 +1,13 @@
 package com.nageoffer.shortlink.shortlinkporject;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PorjectApplication {
-
+@MapperScan("com.nageoffer.shortlink.shortlinkporject.dao.mapper")
+public class ShortLinkApplication {
     public static void main(String[] args) {
-        SpringApplication.run(PorjectApplication.class, args);
+        SpringApplication.run(ShortLinkApplication.class, args);
     }
-
 }
