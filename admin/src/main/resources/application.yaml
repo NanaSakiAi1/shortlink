@@ -4,13 +4,19 @@ spring:
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
     # ShardingSphere 配置文件路径
-    url: jdbc:shardingsphere:classpath:shardingsphere-config.yaml
+    url: jdbc:shardingsphere:classpath:shardingsphere-config-${database.env:dev}.yaml
   data:
     redis:
       host: 127.0.0.1
       port: 6379
       password: 20030106dnd    # ← 填你的 Redis 密码
       database: 0
+  # application.yml
+  logging:
+    level:
+      root: info
+      com.nageoffer: debug
+
   cloud:
     nacos:
       discovery:
