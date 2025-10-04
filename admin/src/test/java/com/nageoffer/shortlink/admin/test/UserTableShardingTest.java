@@ -1,7 +1,7 @@
 package com.nageoffer.shortlink.admin.test;
 
 public class UserTableShardingTest {
-    public static final String SQL = "CREATE TABLE `t_group-%d` (\n" +
+    public static final String SQL = "CREATE TABLE `t_group_%d` (\n" +
             "  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
             "  `gid` varchar(32) COLLATE utf8mb4_general_ci NOT NULL COMMENT '分组标识',\n" +
             "  `name` varchar(64) COLLATE utf8mb4_general_ci NOT NULL COMMENT '分组名称\\n',\n" +

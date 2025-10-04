@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.admin.remote.dto;
+package com.nageoffer.shortlink.admin.remote;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
@@ -9,9 +9,11 @@ import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
+import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,4 +53,17 @@ public interface ShortLinkRemoteService {
         });
     }
 
+    /**
+     * 短链接分组组内数量
+     *
+     * @param requestParam 分组数量请求参数
+     * @return 短链接分组组内数量响应
+     */
+    default Result<List<ShortLinkGroupCountQueryRespDTO>> listGroupShortLinkCount(List<String> requestParam) {
+        String body = HttpRequest.get("http://127.0.0.1:8001/api/short-link/v1/count")
+                .form("requestParam", requestParam.toArray(new String[0])) // -> requestParam=a&requestParam=b
+                .execute()
+                .body();
+        return JSON.parseObject(body, new TypeReference<>() {});
+    }
 }

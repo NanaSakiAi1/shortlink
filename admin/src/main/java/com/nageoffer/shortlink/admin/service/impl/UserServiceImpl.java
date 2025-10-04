@@ -21,6 +21,7 @@ import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -65,12 +66,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY+reqDTO.getUsername());
         try{
             if(lock.tryLock()){
+
                 // 插入用户
-                int result = baseMapper.insert(BeanUtil.toBean(reqDTO, UserDO.class));
-                // 插入失败
-                if(result <= 0){
+                try {
+                    int result = baseMapper.insert(BeanUtil.toBean(reqDTO, UserDO.class));
+                    if(result <= 0){
+                        throw new ClientException(UserErrorCodeEnum.USER_SAVE_ERROR);
+                    }
+                }catch (DuplicateKeyException  ex){
                     throw new ClientException(UserErrorCodeEnum.USER_SAVE_ERROR);
                 }
+                // 插入失败
+
                 userRegisterCachePenetrationBloomFilte.add(reqDTO.getUsername());
                 return;
             }
@@ -126,7 +133,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         String token = UUID.randomUUID().toString();
 
         stringRedisTemplate.opsForHash().put(key, token, JSON.toJSONString(userDO));
-        stringRedisTemplate.expire(key, 30, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(key, 30, TimeUnit.DAYS);
 
         return new UserLoginRespDTO(token);
     }

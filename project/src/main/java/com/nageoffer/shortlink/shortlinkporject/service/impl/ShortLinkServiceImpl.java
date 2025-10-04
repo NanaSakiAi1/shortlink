@@ -2,6 +2,7 @@ package com.nageoffer.shortlink.shortlinkporject.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,6 +12,7 @@ import com.nageoffer.shortlink.shortlinkporject.dao.mapper.ShortLinkMapper;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkCreateRespDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkService;
 import com.nageoffer.shortlink.shortlinkporject.toolkit.HashUtil;
@@ -21,6 +23,9 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 短链接服务实现类
  */
@@ -30,7 +35,6 @@ import org.springframework.stereotype.Service;
 public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
     private final StringRedisTemplate stringRedisTemplate;
     private final RBloomFilter<String> shortUriCreateCachePenetrationBloomFilter;
-
     /**
      * 创建短链接
      *
@@ -91,6 +95,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .orderByDesc(ShortLinkDO::getCreateTime);
         IPage<ShortLinkDO> resultPage = baseMapper.selectPage(reqDTO, queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each,ShortLinkPageRespDTO.class));
+    }
+
+    @Override
+    public List<ShortLinkGroupCountQueryRespDTO> listGroupShortLinkCount(List<String> requestParam) {
+        QueryWrapper<ShortLinkDO> queryWrapper = Wrappers.query(new ShortLinkDO())
+                .select("gid as gid, count(*) as shortLinkCount")
+                .in("gid", requestParam)
+                .eq("enable_status", 0)
+
+                .groupBy("gid");
+        List<Map<String, Object>> shortLinkDOList = baseMapper.selectMaps(queryWrapper);
+        return BeanUtil.copyToList(shortLinkDOList, ShortLinkGroupCountQueryRespDTO.class);
     }
 
     /**

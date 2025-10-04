@@ -40,7 +40,13 @@ public class UserTransmitFilter implements Filter {
         String requestURI = httpReq.getRequestURI();
         if (!IGNORE_URI.contains(requestURI)) {
             String method = httpReq.getMethod();
-            if (!Objects.equals(requestURI, "/api/short-link/admin/v1/user") && !Objects.equals(method, "POST")) {
+
+            // ========= 放行注册接口：POST /api/short-link/admin/v1/user =========
+            if (Objects.equals(requestURI, "/api/short-link/admin/v1/user") && Objects.equals(method, "POST")) {
+                chain.doFilter(req, res);
+                return;
+            } else {
+                // ========= 其余请求，执行你原来的鉴权逻辑 =========
                 // 既兼容 Authorization 也兼容 token（优先 Authorization）
                 String token = httpReq.getHeader("Authorization");
                 if (token == null || token.isEmpty()) {
@@ -58,8 +64,6 @@ public class UserTransmitFilter implements Filter {
                     return;
                 }
 
-
-
                 String key = "login_" + username;
                 Object userInfoJsonStr;
                 try {
@@ -69,7 +73,7 @@ public class UserTransmitFilter implements Filter {
                     }
                 } catch (Exception e) {
                     try {
-                        returnJson((HttpServletResponse) res,  JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
+                        returnJson((HttpServletResponse) res, JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
@@ -77,10 +81,7 @@ public class UserTransmitFilter implements Filter {
                 }
                 UserInfoDTO userInfoDTO = JSON.parseObject(userInfoJsonStr.toString(), UserInfoDTO.class);
                 UserContext.setUser(userInfoDTO);
-
             }
-
-
         }
         try {
             chain.doFilter(req, res);
