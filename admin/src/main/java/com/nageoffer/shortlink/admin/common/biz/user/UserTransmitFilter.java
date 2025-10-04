@@ -1,12 +1,23 @@
 package com.nageoffer.shortlink.admin.common.biz.user;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
+import com.google.common.collect.Lists;
+import com.nageoffer.shortlink.admin.common.convention.exception.ClientException;
+import com.nageoffer.shortlink.admin.common.convention.result.Results;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Objects;
+
+import static com.nageoffer.shortlink.admin.common.convention.errorcode.BaseErrorCode.IDEMPOTENT_TOKEN_NULL_ERROR;
 
 /**
  * 用户信息传输过滤器
@@ -17,41 +28,75 @@ public class UserTransmitFilter implements Filter {
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    private static final List<String> IGNORE_URI = Lists.newArrayList(
+            "/api/short-link/admin/v1/user/login",
+            "/api/short-link/admin/v1/user/has-username",
+            "/api/short-link/admin/v1/user"
+    );
+
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpReq = (HttpServletRequest) req;
+        String requestURI = httpReq.getRequestURI();
+        if (!IGNORE_URI.contains(requestURI)) {
+            String method = httpReq.getMethod();
+            if (!Objects.equals(requestURI, "/api/short-link/admin/v1/user") && !Objects.equals(method, "POST")) {
+                // 既兼容 Authorization 也兼容 token（优先 Authorization）
+                String token = httpReq.getHeader("Authorization");
+                if (token == null || token.isEmpty()) {
+                    token = httpReq.getHeader("token");
+                }
+                // username 仍然从头里取；如果你想只靠 token 也能找回用户名，见下「可选增强」
+                String username = httpReq.getHeader("username");
+                log.info("headers username={}, token={}", username, token);
+                if (!StrUtil.isAllNotBlank(token, username)) {
+                    try {
+                        returnJson((HttpServletResponse) res, JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    return;
+                }
 
-        // 既兼容 Authorization 也兼容 token（优先 Authorization）
-        String token = httpReq.getHeader("Authorization");
-        if (token == null || token.isEmpty()) {
-            token = httpReq.getHeader("token");
-        }
 
-        // username 仍然从头里取；如果你想只靠 token 也能找回用户名，见下「可选增强」
-        String username = httpReq.getHeader("username");
-        log.info("headers username={}, token={}", username, token);
-
-        try {
-            // 任何一个为空都不查 Redis，避免 HGET 传 null 直接抛错
-            if (username != null && !username.isEmpty()
-                    && token != null && !token.isEmpty()) {
 
                 String key = "login_" + username;
-                Object userInfoJsonStr = stringRedisTemplate.opsForHash().get(key, token);
-                if (userInfoJsonStr != null) {
-                    // 这里你可以反序列化完整用户，或只放用户名都行
-                    // UserInfoDTO dto = JSON.parseObject(userInfoJsonStr.toString(), UserInfoDTO.class);
-                    // UserContext.setUser(dto);
-                    UserContext.setUser(new UserInfoDTO(null, username, null));
-                } else {
-                    log.info("no session found in redis for key={}, token={}", key, token);
+                Object userInfoJsonStr;
+                try {
+                    userInfoJsonStr = stringRedisTemplate.opsForHash().get(key, token);
+                    if (userInfoJsonStr == null) {
+                        throw new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR);
+                    }
+                } catch (Exception e) {
+                    try {
+                        returnJson((HttpServletResponse) res,  JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    return;
                 }
+                UserInfoDTO userInfoDTO = JSON.parseObject(userInfoJsonStr.toString(), UserInfoDTO.class);
+                UserContext.setUser(userInfoDTO);
+
             }
 
+
+        }
+        try {
             chain.doFilter(req, res);
         } finally {
             UserContext.removeUser();
         }
     }
+    private void returnJson(HttpServletResponse response, String json) throws Exception {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json; charset=utf-8");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        PrintWriter writer = response.getWriter();
+        writer.write(json);
+        writer.flush();
+        writer.close();
+    }
 }
+
 
