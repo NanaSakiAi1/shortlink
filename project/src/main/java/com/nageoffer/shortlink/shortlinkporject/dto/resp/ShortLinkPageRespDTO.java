@@ -1,27 +1,15 @@
-package com.nageoffer.shortlink.shortlinkporject.dao.entity;
+package com.nageoffer.shortlink.shortlinkporject.dto.resp;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.nageoffer.shortlink.shortlinkporject.common.database.BaseDO;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.Date;
+
 /**
- * 短链接实体
+ * 短链接分页响应对象
  */
 @Data
-@TableName("t_link")
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class ShortLinkDO extends BaseDO {
-
-    @TableId(type = IdType.AUTO)
+public class ShortLinkPageRespDTO{
     /**
      * ID
      */
@@ -57,15 +45,7 @@ public class ShortLinkDO extends BaseDO {
      */
     private String gid;
 
-    /**
-     * favicon
-     */
     private String favicon;
-
-    /**
-     * 启用标识 0:启用n1:未启用
-     */
-    private Integer enableStatus;
 
     /**
      * 创建类型0:接口创建，1:控制台创建
@@ -87,6 +67,5 @@ public class ShortLinkDO extends BaseDO {
      */
     @TableField("`describe`")
     private String describe;
-
 
 }
