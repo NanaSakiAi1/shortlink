@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.admin.remote.dto.req;
+package com.nageoffer.shortlink.shortlinkporject.dto.req;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -15,12 +15,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ShortLinkCreateReqDTO {
+public class ShortLinkUpdateReqDTO {
 
-    /**
-     * 域名
-     */
-    private String domain;
 
     /**
      * 原始链接
@@ -31,12 +27,10 @@ public class ShortLinkCreateReqDTO {
      * 分组标识
      */
     private String gid;
-
     /**
-     * 创建类型 0：接口创建 1：控制台创建
+     * 完整短连接
      */
-    private Integer createdType;
-
+    private String fullShortUrl;
     /**
      * 有效期类型 0：永久有效 1：自定义
      */

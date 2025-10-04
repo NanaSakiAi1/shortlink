@@ -6,6 +6,7 @@ import com.google.protobuf.ServiceException;
 import com.nageoffer.shortlink.shortlinkporject.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
@@ -41,4 +42,12 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      */
 
     List<ShortLinkGroupCountQueryRespDTO> listGroupShortLinkCount(List<String> requestParam);
+
+    /**
+     * 修改短链接
+     *
+     * @param reqDTO 修改短链接请求参数
+     * @return 修改短链接响应参数
+     */
+    void updateShortLink(ShortLinkUpdateReqDTO reqDTO);
 }
