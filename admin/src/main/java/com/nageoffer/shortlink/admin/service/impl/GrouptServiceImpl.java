@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 短连接分组接口实现层
@@ -35,18 +36,23 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
     /**
      * 创建短连接分组
      *
-     * @param GroupName
+     * @param groupName
      */
     @Override
-    public void saveGroup(String GroupName) {
+    public void saveGroup(String groupName) {
+        saveGroup(UserContext.getUsername(), groupName);
+    }
+
+    @Override
+    public void saveGroup(String username, String groupName) {
         String gid;
         do {
             gid = RandomGenerator.generateRandom();
-        } while (!hasGid(gid));
-        log.info("UserContext.username={}", UserContext.getUsername());
+        } while (!hasGid(username,gid));
+        log.info("UserContext.username={}", username);
         GroupDO groupDO = GroupDO.builder()
-                .name(GroupName)
-                .username(UserContext.getUsername())
+                .name(groupName)
+                .username(username)
                 .gid(RandomGenerator.generateRandom())
                 .sortOrder(0)
                 .build();
@@ -149,13 +155,13 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
      * 判断GID是否已存在
      *
      * @param gid
+     * @param username
      * @return
      */
-    private boolean hasGid(String gid) {
+    private boolean hasGid(String username ,String gid) {
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                 .eq(GroupDO::getGid, gid)
-                //TODO 设置用户名
-                .eq(GroupDO::getUsername, UserContext.getUsername());
+                .eq(GroupDO::getUsername, Optional.ofNullable(username).orElse(UserContext.getUsername()));
         GroupDO hasGroupFlag = baseMapper.selectOne(queryWrapper);
         return hasGroupFlag == null;
     }
