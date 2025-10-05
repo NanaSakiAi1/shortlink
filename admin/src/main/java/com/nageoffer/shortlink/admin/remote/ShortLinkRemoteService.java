@@ -143,4 +143,13 @@ public interface ShortLinkRemoteService {
                 .execute();
 
     }
+    /**
+     * 删除短链接
+     */
+    default void removeShortLink(RecycleBinRemoveReqDTO requestParam){
+        HttpRequest.post("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/remove")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(requestParam))
+                .execute();
+    }
 }

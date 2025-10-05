@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.shortlinkporject.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.shortlinkporject.dao.mapper.ShortLinkMapper;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.RecycleBinRecoverReqDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.RecycleBinRemoveReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkRecycleBinPageReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
@@ -65,7 +66,10 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
             return result;
         });
     }
-
+    /**
+     * 恢复短链接
+     * @param requestParam
+     */
     @Override
     public void recoverShortLink(RecycleBinRecoverReqDTO requestParam) {
         LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
@@ -79,5 +83,18 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
         baseMapper.update(shortLinkDO, updateWrapper);
         stringRedisTemplate.delete(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, requestParam.getFullShortUrl()));
 
+    }
+    /**
+     * 删除回收站
+     * @param requestParam
+     */
+    @Override
+    public void removeShortLink(RecycleBinRemoveReqDTO requestParam) {
+        LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
+                .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
+                .eq(ShortLinkDO::getGid, requestParam.getGid())
+                .eq(ShortLinkDO::getDelFlag, 0)
+                .eq(ShortLinkDO::getEnableStatus, 1);
+        baseMapper.delete(updateWrapper);
     }
 }
