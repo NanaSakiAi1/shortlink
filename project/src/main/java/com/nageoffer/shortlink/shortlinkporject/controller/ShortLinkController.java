@@ -11,6 +11,8 @@ import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkService;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,5 +51,13 @@ public class ShortLinkController {
     public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO reqDTO)  {
         shortLinkService.updateShortLink(reqDTO);
         return Results.success();
+    }
+    /**
+     * 短链接跳转
+     * @return
+     */
+    @GetMapping("/{short-uri}")
+    public void restoreUrl(@PathVariable("short-uri") String shortUri, ServletRequest request, ServletResponse response) {
+        shortLinkService.restoreUrl(shortUri, request, response);
     }
 }

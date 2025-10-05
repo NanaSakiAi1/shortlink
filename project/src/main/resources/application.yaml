@@ -1,5 +1,9 @@
+
 server:
   port: 8001
+logging.level.org.springframework.web: DEBUG
+server.error.include-message: always
+
 spring:
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
@@ -11,6 +15,8 @@ spring:
       port: 6379
       password: 20030106dnd    # ← 填你的 Redis 密码
       database: 0
+
+
   cloud:
     nacos:
       discovery:

@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.admin.remote;
 
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
@@ -29,13 +30,34 @@ public interface ShortLinkRemoteService {
      * @return 短链接创建响应
      */
     default Result<ShortLinkCreateRespDTO> createShortLink(ShortLinkCreateReqDTO requestParam) {
-        String resultBodyStr = HttpRequest.post("http://127.0.0.1:8001/api/short-link/v1/create")
+
+        String url = "http://127.0.0.1:8001/api/short-link/v1/create";
+        HttpResponse resp = HttpRequest.post(url)
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(requestParam))
-                .execute()
-                .body();
-        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
-        });
+                .execute();
+
+        int status = resp.getStatus();
+        String body = resp.body();
+        System.out.println("[REMOTE][create] url=" + url + ", status=" + status + ", body=" + body);
+
+        if (status < 200 || status >= 300) {
+            // 直传远程原文，避免二次解析出错
+            Result<ShortLinkCreateRespDTO> r = new Result<>();
+
+            r.setCode("REMOTE_HTTP_" + status);
+            r.setMessage(body);
+            return r;
+        }
+
+        try {
+            return JSON.parseObject(body, new TypeReference<Result<ShortLinkCreateRespDTO>>() {});
+        } catch (Exception ex) {
+            Result<ShortLinkCreateRespDTO> r = new Result<>();
+            r.setCode("REMOTE_JSON_PARSE");
+            r.setMessage("原文: " + body);
+            return r;
+        }
     }
 
     /**
