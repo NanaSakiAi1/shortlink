@@ -23,12 +23,12 @@ public class GroupController {
     private final GroupService groupService;
     /**
      * 新增短连接分组
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @PostMapping("/api/short-link/admin/v1/group")
-    public Result<Void> saveGroup(@RequestBody ShortLinkGroupReqDTO reqDTO) {
-        groupService.saveGroup(reqDTO.getName());
+    public Result<Void> saveGroup(@RequestBody ShortLinkGroupReqDTO ReqDTO) {
+        groupService.saveGroup(ReqDTO.getName());
         return Results.success();
     }
     /**
@@ -41,12 +41,12 @@ public class GroupController {
     }
     /**
      * 修改短连接分组
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @PutMapping("/api/short-link/admin/v1/group")
-    public Result<Void> updateGroup(@RequestBody ShortLinkGroupUpdateReqDTO reqDTO) {
-        groupService.updateGroup(reqDTO.getGid(), reqDTO.getName());
+    public Result<Void> updateGroup(@RequestBody ShortLinkGroupUpdateReqDTO ReqDTO) {
+        groupService.updateGroup(ReqDTO.getGid(), ReqDTO.getName());
         return Results.success();
     }
     /**
@@ -61,12 +61,12 @@ public class GroupController {
     }
     /**
      * 排序短连接分组
-     * @param reqDTOs
+     * @param ReqDTOs
      * @return
      */
     @PostMapping("/api/short-link/v1/admin/group/sort")
-    public Result<Void> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> reqDTOs) {
-        groupService.sortGroup(reqDTOs);
+    public Result<Void> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> ReqDTOs) {
+        groupService.sortGroup(ReqDTOs);
         return Results.success();
     }
 }

@@ -59,18 +59,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     }
 
     @Override
-    public void Register(UserRegisterReqDTO reqDTO) {
+    public void Register(UserRegisterReqDTO ReqDTO) {
         // 判断用户名是否存在
-        if(!hasUsername(reqDTO.getUsername())){
+        if(!hasUsername(ReqDTO.getUsername())){
             throw new ClientException(UserErrorCodeEnum.USER_NAME_EXIST);
         }
-        RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY+reqDTO.getUsername());
+        RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY+ReqDTO.getUsername());
         try{
             if(lock.tryLock()){
 
                 // 插入用户
                 try {
-                    int result = baseMapper.insert(BeanUtil.toBean(reqDTO, UserDO.class));
+                    int result = baseMapper.insert(BeanUtil.toBean(ReqDTO, UserDO.class));
                     if(result <= 0){
                         throw new ClientException(UserErrorCodeEnum.USER_SAVE_ERROR);
                     }
@@ -79,8 +79,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                 }
                 // 插入失败
 
-                userRegisterCachePenetrationBloomFilte.add(reqDTO.getUsername());
-                groupService.saveGroup(reqDTO.getUsername(),"默认分组");
+                userRegisterCachePenetrationBloomFilte.add(ReqDTO.getUsername());
+                groupService.saveGroup(ReqDTO.getUsername(),"默认分组");
                 return;
             }
             throw new ClientException(UserErrorCodeEnum.USER_NAME_EXIST);
@@ -91,37 +91,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     }
     /**
      * 更新用户信息
-     * @param reqDTO
+     * @param ReqDTO
      */
 
     @Override
-    public void update(UserUpdateReqDTO reqDTO) {
+    public void update(UserUpdateReqDTO ReqDTO) {
 
         //TODO 验证当前用户名是否为登录用户
 
         LambdaUpdateWrapper<UserDO> updateWrapper = Wrappers.lambdaUpdate(UserDO.class)
-                .eq(UserDO::getUsername, reqDTO.getUsername());
-        baseMapper.update(BeanUtil.toBean(reqDTO,UserDO.class), updateWrapper);
+                .eq(UserDO::getUsername, ReqDTO.getUsername());
+        baseMapper.update(BeanUtil.toBean(ReqDTO,UserDO.class), updateWrapper);
 
     }
     /**
      * 用户登录
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @Override
-    public UserLoginRespDTO Login(UserLoginReqDTO reqDTO) {
+    public UserLoginRespDTO Login(UserLoginReqDTO ReqDTO) {
         UserDO userDO = baseMapper.selectOne(
                 Wrappers.<UserDO>lambdaQuery()
-                        .eq(UserDO::getUsername, reqDTO.getUsername())
-                        .eq(UserDO::getPassword, reqDTO.getPassword())
+                        .eq(UserDO::getUsername, ReqDTO.getUsername())
+                        .eq(UserDO::getPassword, ReqDTO.getPassword())
                         .eq(UserDO::getDelFlag, 0)
         );
         if (userDO == null) {
             throw new ClientException(UserErrorCodeEnum.USER_NULL);
         }
 
-        String key = "login_" + reqDTO.getUsername();
+        String key = "login_" + ReqDTO.getUsername();
         stringRedisTemplate.delete(key);
         // 如果你想“同一用户只能单会话”，就先删旧会话（整个 hash）
         // stringRedisTemplate.delete(key);

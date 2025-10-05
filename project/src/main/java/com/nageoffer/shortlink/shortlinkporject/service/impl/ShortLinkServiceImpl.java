@@ -105,7 +105,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
         }
         String format = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
-        stringRedisTemplate.opsForValue().set(format,requestParam.getOriginUrl(), LinkUtil.getLinkCacheValidTime(requestParam.getValidDate()), TimeUnit.MILLISECONDS);
+        stringRedisTemplate.opsForValue().set(format, requestParam.getOriginUrl(), LinkUtil.getLinkCacheValidTime(requestParam.getValidDate()), TimeUnit.MILLISECONDS);
 
         shortUriCreateCachePenetrationBloomFilter.add(fullShortUrl);
         return ShortLinkCreateRespDTO.builder()
@@ -118,17 +118,17 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     /**
      * 分页查询短链接
      *
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @Override
-    public IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO reqDTO) {
+    public IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO ReqDTO) {
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, reqDTO.getGid())
+                .eq(ShortLinkDO::getGid, ReqDTO.getGid())
                 .eq(ShortLinkDO::getEnableStatus, 0)
                 .eq(ShortLinkDO::getDelFlag, 0)
                 .orderByDesc(ShortLinkDO::getCreateTime);
-        IPage<ShortLinkDO> resultPage = baseMapper.selectPage(reqDTO, queryWrapper);
+        IPage<ShortLinkDO> resultPage = baseMapper.selectPage(ReqDTO, queryWrapper);
         return resultPage.convert(each -> {
             ShortLinkPageRespDTO result = BeanUtil.toBean(each, ShortLinkPageRespDTO.class);
             String domainWithScheme = (each.getDomain().startsWith("http") ? each.getDomain() : "http://" + each.getDomain());
@@ -157,16 +157,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     /**
      * 更新短链接
      *
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateShortLink(ShortLinkUpdateReqDTO reqDTO) {
+    public void updateShortLink(ShortLinkUpdateReqDTO ReqDTO) {
 
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, reqDTO.getGid())
-                .eq(ShortLinkDO::getFullShortUrl, reqDTO.getFullShortUrl())
+                .eq(ShortLinkDO::getGid, ReqDTO.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
                 .eq(ShortLinkDO::getDelFlag, 0)
                 .eq(ShortLinkDO::getEnableStatus, 0);
 
@@ -179,24 +179,24 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .shortUri(hasShortLinkDO.getShortUri())
                 .favicon(hasShortLinkDO.getFavicon())
                 .createdType(hasShortLinkDO.getCreatedType())
-                .gid(reqDTO.getGid())
-                .originUrl(reqDTO.getOriginUrl())
-                .describe(reqDTO.getDescribe())
-                .validDateType(reqDTO.getValidDateType())
-                .validDate(reqDTO.getValidDate())
+                .gid(ReqDTO.getGid())
+                .originUrl(ReqDTO.getOriginUrl())
+                .describe(ReqDTO.getDescribe())
+                .validDateType(ReqDTO.getValidDateType())
+                .validDate(ReqDTO.getValidDate())
                 .build();
-        if (Objects.equals(hasShortLinkDO.getGid(), reqDTO.getGid())) {
+        if (Objects.equals(hasShortLinkDO.getGid(), ReqDTO.getGid())) {
             LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, reqDTO.getFullShortUrl())
-                    .eq(ShortLinkDO::getGid, reqDTO.getGid())
+                    .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
+                    .eq(ShortLinkDO::getGid, ReqDTO.getGid())
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0)
-                    .set(Objects.equals(reqDTO.getValidDateType(), PERMANENT.getType()), ShortLinkDO::getValidDate, null);
+                    .set(Objects.equals(ReqDTO.getValidDateType(), PERMANENT.getType()), ShortLinkDO::getValidDate, null);
 
             baseMapper.update(shortLinkDO, updateWrapper);
         } else {
             LambdaUpdateWrapper<ShortLinkDO> linkUpdateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, reqDTO.getFullShortUrl())
+                    .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
                     .eq(ShortLinkDO::getGid, hasShortLinkDO.getGid())
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0);
@@ -222,14 +222,14 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             return;
         }
         boolean contains = shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl);
-        if(! contains){
+        if (!contains) {
             ((HttpServletResponse) response).sendRedirect("/page/notfound");
-            return ;
+            return;
         }
 
 
-        String gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY,fullShortUrl));
-        if(StrUtil.isNotBlank(gotoIsNullShortLink))  {
+        String gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
+        if (StrUtil.isNotBlank(gotoIsNullShortLink)) {
             ((HttpServletResponse) response).sendRedirect("/page/notfound");
             return;
         }
@@ -246,7 +246,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(linkGotoQueryWrapper);
             if (shortLinkGotoDO == null) {
                 // 严谨来说此处需要进行封控
-                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY,fullShortUrl),"-",30, TimeUnit.SECONDS);
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.SECONDS);
                 ((HttpServletResponse) response).sendRedirect("/page/notfound");
                 return;
             }
@@ -256,22 +256,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0);
             shortLinkDO = baseMapper.selectOne(queryWrapper);
-            if (shortLinkDO != null) {
-
-                if(shortLinkDO.getValidDate() != null&&shortLinkDO.getValidDate().before(new Date())){
-                    stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY,fullShortUrl),"-",30, TimeUnit.SECONDS);
-                    ((HttpServletResponse) response).sendRedirect("/page/notfound");
-                    return;
-                }
-                stringRedisTemplate.opsForValue().set(
-                        format,
-                        shortLinkDO.getOriginUrl(),
-                        LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()),
-                        TimeUnit.MILLISECONDS
-                );
-                ((HttpServletResponse) response).sendRedirect(shortLinkDO.getOriginUrl());
+            if (shortLinkDO == null ||shortLinkDO.getValidDate().before(new Date())) {
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.SECONDS);
+                ((HttpServletResponse) response).sendRedirect("/page/notfound");
+                return;
             }
-
+            stringRedisTemplate.opsForValue().set(
+                    format,
+                    shortLinkDO.getOriginUrl(),
+                    LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()),
+                    TimeUnit.MILLISECONDS
+            );
+            ((HttpServletResponse) response).sendRedirect(shortLinkDO.getOriginUrl());
         } finally {
             lock.unlock();
         }
@@ -307,11 +303,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     /**
      * 获取网站图标
+     *
      * @param url
      * @return
      */
     @SneakyThrows
-    private String getFavicon(String url){
+    private String getFavicon(String url) {
         URL targetUrl = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) targetUrl.openConnection();
         connection.setRequestMethod("GET");

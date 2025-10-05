@@ -27,13 +27,13 @@ public interface UserService extends IService<UserDO> {
     Boolean hasUsername(String username);
     /**
      * 注册用户
-     * @param reqDTO
+     * @param ReqDTO
      */
-    void Register(UserRegisterReqDTO reqDTO);
+    void Register(UserRegisterReqDTO ReqDTO);
 
-    void update(UserUpdateReqDTO reqDTO);
+    void update(UserUpdateReqDTO ReqDTO);
 
-    UserLoginRespDTO Login(UserLoginReqDTO reqDTO);
+    UserLoginRespDTO Login(UserLoginReqDTO ReqDTO);
 
     Boolean checkLogin(String username,String token);
 

@@ -134,17 +134,17 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
     /**
      * 短链接分组排序
      *
-     * @param reqDTOs
+     * @param ReqDTOs
      */
     @Override
-    public void sortGroup(List<ShortLinkGroupSortReqDTO> reqDTOs) {
-        reqDTOs.forEach(reqDTO -> {
+    public void sortGroup(List<ShortLinkGroupSortReqDTO> ReqDTOs) {
+        ReqDTOs.forEach(ReqDTO -> {
             GroupDO groupDO = GroupDO.builder()
-                    .gid(reqDTO.getGid()).
-                    sortOrder(reqDTO.getSortOrder())
+                    .gid(ReqDTO.getGid()).
+                    sortOrder(ReqDTO.getSortOrder())
                     .build();
             LambdaUpdateWrapper<GroupDO> updateWrapper = Wrappers.lambdaUpdate(GroupDO.class)
-                    .eq(GroupDO::getGid, reqDTO.getGid())
+                    .eq(GroupDO::getGid, ReqDTO.getGid())
                     .eq(GroupDO::getUsername, UserContext.getUsername())
                     .eq(GroupDO::getDelFlag, 0);
             baseMapper.update(groupDO, updateWrapper);

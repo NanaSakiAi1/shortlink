@@ -54,32 +54,32 @@ public class UserController {
     }
     /**
      * 用户注册
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @PostMapping("/api/short-link/admin/v1/user")
-    public Result<Void> register(@RequestBody UserRegisterReqDTO reqDTO){
-        userService.Register(reqDTO);
+    public Result<Void> register(@RequestBody UserRegisterReqDTO ReqDTO){
+        userService.Register(ReqDTO);
         return Results.success();
     }
     /**
      * 用户更新
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @PutMapping("/api/short-link/admin/v1/user")
-    public Result<Void> update(@RequestBody UserUpdateReqDTO reqDTO){
-        userService.update(reqDTO);
+    public Result<Void> update(@RequestBody UserUpdateReqDTO ReqDTO){
+        userService.update(ReqDTO);
         return Results.success();
     }
     /**
      * 用户登录
-     * @param reqDTO
+     * @param ReqDTO
      * @return
      */
     @PostMapping("/api/short-link/admin/v1/user/login")
-    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO reqDTO){
-        return Results.success(userService.Login(reqDTO));
+    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO ReqDTO){
+        return Results.success(userService.Login(ReqDTO));
     }
     /**
      * 验证用户登录

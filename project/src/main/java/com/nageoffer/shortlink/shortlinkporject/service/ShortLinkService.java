@@ -24,18 +24,18 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
     /**
      * 创建短链接
      *
-     * @param reqDTO 创建短链接请求参数
+     * @param ReqDTO 创建短链接请求参数
      * @return 创建短链接响应参数
      */
-    ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO reqDTO) throws ServiceException;
+    ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO ReqDTO) throws ServiceException;
 
     /**
      * 分页查询短链接
      *
-     * @param reqDTO 分页查询短链接请求参数
+     * @param ReqDTO 分页查询短链接请求参数
      * @return 分页查询短链接响应参数
      */
-    IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO reqDTO);
+    IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO ReqDTO);
     /**
      * 短链接分组查询数量
      *
@@ -48,10 +48,10 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
     /**
      * 修改短链接
      *
-     * @param reqDTO 修改短链接请求参数
+     * @param ReqDTO 修改短链接请求参数
      * @return 修改短链接响应参数
      */
-    void updateShortLink(ShortLinkUpdateReqDTO reqDTO);
+    void updateShortLink(ShortLinkUpdateReqDTO ReqDTO);
     /**
      * 短链接跳转
      *

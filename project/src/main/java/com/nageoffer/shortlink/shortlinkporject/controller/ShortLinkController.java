@@ -27,16 +27,16 @@ public class ShortLinkController {
      * @return
      */
     @PostMapping("/api/short-link/v1/create")
-    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO reqDTO) throws ServiceException {
-        return Results.success(shortLinkService.createShortLink(reqDTO));
+    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO ReqDTO) throws ServiceException {
+        return Results.success(shortLinkService.createShortLink(ReqDTO));
     }
     /**
      * 分页查询短链接
      * @return
      */
     @GetMapping("/api/short-link/v1/page")
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(ShortLinkPageReqDTO reqDTO) {
-        return Results.success(shortLinkService.pageShortLink(reqDTO));
+    public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(ShortLinkPageReqDTO ReqDTO) {
+        return Results.success(shortLinkService.pageShortLink(ReqDTO));
     }
     /**
      * 短链接分组组内数量
@@ -48,8 +48,8 @@ public class ShortLinkController {
     }
 
     @PostMapping("/api/short-link/v1/update")
-    public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO reqDTO)  {
-        shortLinkService.updateShortLink(reqDTO);
+    public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO ReqDTO)  {
+        shortLinkService.updateShortLink(ReqDTO);
         return Results.success();
     }
     /**
