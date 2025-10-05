@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Result;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Results;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.RecycleBinSaveReqDTO;
-import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkRecycleBinPageReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.service.RecycleBinService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class RecycleBinController {
         return Results.success();
     }
     @GetMapping("/api/short-link/v1/recycle-bin/page")
-    public Result<IPage<ShortLinkPageRespDTO>> pageRecycleShortLink(ShortLinkPageReqDTO ReqDTO) {
+    public Result<IPage<ShortLinkPageRespDTO>> pageRecycleShortLink(ShortLinkRecycleBinPageReqDTO ReqDTO) {
         return Results.success(recycleBinService.pageShortLink(ReqDTO));
     }
 }
