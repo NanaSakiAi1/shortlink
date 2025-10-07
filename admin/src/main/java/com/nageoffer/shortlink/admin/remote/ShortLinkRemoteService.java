@@ -6,11 +6,14 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
+import com.nageoffer.shortlink.admin.common.biz.user.UserInfoDTO;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.remote.dto.req.*;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkStatsRespDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
@@ -22,6 +25,18 @@ import java.util.Map;
  */
 
 public interface ShortLinkRemoteService {
+
+    // 从 ThreadLocal 取当前登录用户（你已有 UserContext/UserInfoDTO）
+    private Map<String, String> authHeaders() {
+        Map<String, String> h = new HashMap<>();
+        UserInfoDTO u = UserContext.getUser();
+        if (u != null) {
+            h.put("username", u.getUsername());
+            h.put("token", u.getToken());
+        }
+        System.out.println("[AUTH HEADERS] " + h); // ✅ 调试
+        return h;
+    }
     /**
      * 创建短链接
      *
@@ -50,7 +65,8 @@ public interface ShortLinkRemoteService {
         }
 
         try {
-            return JSON.parseObject(body, new TypeReference<Result<ShortLinkCreateRespDTO>>() {});
+            return JSON.parseObject(body, new TypeReference<Result<ShortLinkCreateRespDTO>>() {
+            });
         } catch (Exception ex) {
             Result<ShortLinkCreateRespDTO> r = new Result<>();
             r.setCode("REMOTE_JSON_PARSE");
@@ -86,7 +102,8 @@ public interface ShortLinkRemoteService {
                 .form("requestParam", requestParam.toArray(new String[0])) // -> requestParam=a&requestParam=b
                 .execute()
                 .body();
-        return JSON.parseObject(body, new TypeReference<>() {});
+        return JSON.parseObject(body, new TypeReference<>() {
+        });
     }
 
     /**
@@ -94,30 +111,35 @@ public interface ShortLinkRemoteService {
      *
      * @param ReqDTO 修改短链接请求参数
      */
-    default void updateShortLink(ShortLinkUpdateReqDTO ReqDTO){
+    default void updateShortLink(ShortLinkUpdateReqDTO ReqDTO) {
         HttpRequest.post("http://127.0.0.1:8001/api/short-link/v1/update")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(ReqDTO))
                 .execute();
     }
+
     /**
      * 根据url获取标题
+     *
      * @param url
      * @return
      */
-    default Result<String> getTitleByUrl(@RequestParam("url") String url){
-        String resultStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/title?url="+url);
-        return JSON.parseObject(resultStr, new TypeReference<>() {});
+    default Result<String> getTitleByUrl(@RequestParam("url") String url) {
+        String resultStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/title?url=" + url);
+        return JSON.parseObject(resultStr, new TypeReference<>() {
+        });
     }
+
     /**
      * 回收站保存功能
      */
-    default void saveRecycleBin(RecycleBinSaveReqDTO ReqDTO){
+    default void saveRecycleBin(RecycleBinSaveReqDTO ReqDTO) {
         HttpRequest.post("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/save")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(ReqDTO))
                 .execute();
     }
+
     /**
      * 分页查询回收站短链接
      *
@@ -133,6 +155,7 @@ public interface ShortLinkRemoteService {
         return JSON.parseObject(resultPageStr, new TypeReference<>() {
         });
     }
+
     /**
      * 回收站恢复功能
      */
@@ -143,13 +166,44 @@ public interface ShortLinkRemoteService {
                 .execute();
 
     }
+
     /**
      * 删除短链接
      */
-    default void removeShortLink(RecycleBinRemoveReqDTO requestParam){
+    default void removeShortLink(RecycleBinRemoveReqDTO requestParam) {
         HttpRequest.post("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/remove")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(requestParam))
                 .execute();
     }
+
+    default Result<ShortLinkStatsRespDTO> oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
+        System.out.println("[REMOTE][stats] DTO=" + JSON.toJSONString(requestParam)); // 打印看看gid有没有值
+        if (requestParam == null
+                || requestParam.getGid() == null
+                || requestParam.getGid().isEmpty()) {
+            throw new IllegalArgumentException("gid 不能为空：请先选中分组或传入正确的 gid");
+        }
+
+        String url = "http://127.0.0.1:8001/api/short-link/v1/stats";
+        Map<String, Object> params = new HashMap<>();
+        params.put("fullShortUrl", requestParam.getFullShortUrl());
+        params.put("gid", requestParam.getGid());
+        params.put("enableStatus", requestParam.getEnableStatus());
+        params.put("startDate", requestParam.getStartDate());
+        params.put("endDate", requestParam.getEndDate());
+
+        HttpResponse resp = HttpRequest.get(url)
+                .addHeaders(authHeaders())     // 继续带 username、token
+                .form(params)                  // 统一用 map 传参，避免某些场景为空
+                .execute();
+
+        String body = resp.body();
+        System.out.println("[REMOTE][stats] url=" + url
+                + ", status=" + resp.getStatus()
+                + ", body=" + body);
+
+        return JSON.parseObject(body, new TypeReference<>() {});
+    }
 }
+

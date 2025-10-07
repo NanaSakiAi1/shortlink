@@ -1,10 +1,12 @@
-package com.nageoffer.shortlink.admin.common.biz.user;
+package com.nageoffer.shortlink.shortlinkporject.common.biz.user;
+
 import com.alibaba.ttl.TransmittableThreadLocal;
 
 import java.util.Optional;
 
 /**
  * 用户上下文
+ *
  */
 public final class UserContext {
 
@@ -58,10 +60,9 @@ public final class UserContext {
     public static void removeUser() {
         USER_THREAD_LOCAL.remove();
     }
-    /**
-     * 获取当前线程的用户信息
-     */
-    public static UserInfoDTO getUser() {
-        return USER_THREAD_LOCAL.get();
+    // 新增：如果你想单取 token
+    public static String getToken() {
+        UserInfoDTO u = USER_THREAD_LOCAL.get();
+        return u == null ? null : u.getToken();
     }
 }

@@ -71,6 +71,7 @@ public class UserTransmitFilter implements Filter {
                     if (userInfoJsonStr == null) {
                         throw new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR);
                     }
+
                 } catch (Exception e) {
                     try {
                         returnJson((HttpServletResponse) res, JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
@@ -79,7 +80,13 @@ public class UserTransmitFilter implements Filter {
                     }
                     return;
                 }
+                // 将 Redis 里的 JSON 解析成用户信息对象
                 UserInfoDTO userInfoDTO = JSON.parseObject(userInfoJsonStr.toString(), UserInfoDTO.class);
+
+                // ✅ Redis 里没存 token，要手动补回来
+                userInfoDTO.setToken(token);
+
+                // 存入 ThreadLocal
                 UserContext.setUser(userInfoDTO);
             }
         }

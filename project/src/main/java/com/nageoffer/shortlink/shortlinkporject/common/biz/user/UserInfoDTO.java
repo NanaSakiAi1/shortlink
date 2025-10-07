@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.admin.common.biz.user;
+package com.nageoffer.shortlink.shortlinkporject.common.biz.user;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.AllArgsConstructor;
@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 用户信息实体
+ * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：link）获取项目资料
  */
 @Data
 @NoArgsConstructor
@@ -30,7 +31,6 @@ public class UserInfoDTO {
      * 真实姓名
      */
     private String realName;
-    /** 登录 token（用于服务间透传认证） */
+    // 新增
     private String token;
-
 }

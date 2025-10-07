@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
+import com.nageoffer.shortlink.admin.common.biz.user.UserInfoDTO;
 import com.nageoffer.shortlink.admin.common.convention.exception.ClientException;
 import com.nageoffer.shortlink.admin.common.enums.UserErrorCodeEnum;
 import com.nageoffer.shortlink.admin.dao.entity.UserDO;
@@ -137,7 +139,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
         stringRedisTemplate.opsForHash().put(key, token, JSON.toJSONString(userDO));
         stringRedisTemplate.expire(key, 30, TimeUnit.DAYS);
-
+        UserContext.setUser(
+               UserInfoDTO.builder()
+                        .userId(String.valueOf(userDO.getId()))
+                        .username(userDO.getUsername())
+                        .realName(userDO.getRealName())
+                        .token(token)
+                        .build()
+        );
         return new UserLoginRespDTO(token);
     }
     /**
