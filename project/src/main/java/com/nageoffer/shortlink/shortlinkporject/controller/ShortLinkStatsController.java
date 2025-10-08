@@ -3,6 +3,7 @@ package com.nageoffer.shortlink.shortlinkporject.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Result;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Results;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsReqDTO;
@@ -33,5 +34,8 @@ public class ShortLinkStatsController {
     public Result<ShortLinkStatsRespDTO> groupShortLinkStats(ShortLinkGroupStatsReqDTO requestParam) {
         return Results.success(shortLinkStatsService.groupShortLinkStats(requestParam));
     }
-
+    @GetMapping("/api/short-link/v1/stats/access-record/group")
+    public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam) {
+        return Results.success(shortLinkStatsService.groupShortLinkStatsAccessRecord(requestParam));
+    }
 }
