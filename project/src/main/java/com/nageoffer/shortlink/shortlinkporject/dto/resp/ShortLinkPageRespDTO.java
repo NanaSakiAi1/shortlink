@@ -50,13 +50,13 @@ public class ShortLinkPageRespDTO{
 
 
     private Integer totalPv;
-    private Integer toDayPv;
+    private Integer todayPv;
 
     private Integer totalUv;
-    private Integer toDayUv;
+    private Integer todayUv;
 
     private Integer totalUip;
-    private Integer toDayUip;
+    private Integer todayUip;
 
     /**
      * 创建类型0:接口创建，1:控制台创建
