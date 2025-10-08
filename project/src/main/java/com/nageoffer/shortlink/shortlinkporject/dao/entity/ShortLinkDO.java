@@ -61,6 +61,12 @@ public class ShortLinkDO extends BaseDO {
      * favicon
      */
     private String favicon;
+    /**
+     * 统计数据
+     */
+    private Integer totalPv;
+    private Integer totalUv;
+    private Integer totalUip;
 
     /**
      * 启用标识 0:启用n1:未启用

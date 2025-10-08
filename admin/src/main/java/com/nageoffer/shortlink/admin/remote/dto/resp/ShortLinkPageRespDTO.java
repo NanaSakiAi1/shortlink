@@ -48,6 +48,15 @@ public class ShortLinkPageRespDTO{
 
     private String favicon;
 
+    private Integer totalPv;
+    private Integer toDayPv;
+
+    private Integer totalUv;
+    private Integer toDayUv;
+
+    private Integer totalUip;
+    private Integer toDayUip;
+
     /**
      * 创建类型0:接口创建，1:控制台创建
      */

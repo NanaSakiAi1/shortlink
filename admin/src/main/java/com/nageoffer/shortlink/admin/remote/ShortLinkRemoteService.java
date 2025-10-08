@@ -1,5 +1,6 @@
 package com.nageoffer.shortlink.admin.remote;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
@@ -10,10 +11,7 @@ import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
 import com.nageoffer.shortlink.admin.common.biz.user.UserInfoDTO;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.remote.dto.req.*;
-import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkStatsRespDTO;
+import com.nageoffer.shortlink.admin.remote.dto.resp.*;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
@@ -204,6 +202,20 @@ public interface ShortLinkRemoteService {
                 + ", body=" + body);
 
         return JSON.parseObject(body, new TypeReference<>() {});
+    }
+    /**
+     * 单个短链接监控访问记录
+     *
+     * @param requestParam 短链接监控访问记录请求参数
+     * @return 短链接监控访问记录响应
+     */
+    default Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam){
+        Map<String, Object> stringObjectMap = BeanUtil.beanToMap(requestParam, false, true);
+        stringObjectMap.remove("orders");
+        stringObjectMap.remove("records");
+        String resultStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/stats/access-record", stringObjectMap);
+        return JSON.parseObject(resultStr, new TypeReference<>() {
+        });
     }
 }
 

@@ -1,14 +1,17 @@
 package com.nageoffer.shortlink.shortlinkporject.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
-import com.nageoffer.shortlink.shortlinkporject.dao.entity.LinkAccessStatsDO;
-import com.nageoffer.shortlink.shortlinkporject.dao.entity.LinkDeviceStatsDO;
-import com.nageoffer.shortlink.shortlinkporject.dao.entity.LinkLocaleStatsDO;
-import com.nageoffer.shortlink.shortlinkporject.dao.entity.LinkNetworkStatsDO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nageoffer.shortlink.shortlinkporject.dao.entity.*;
 import com.nageoffer.shortlink.shortlinkporject.dao.mapper.*;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.*;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkStatsService;
@@ -29,6 +32,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
     private final LinkOsStatsMapper linkOsStatsMapper;
     private final LinkDeviceStatsMapper linkDeviceStatsMapper;
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
+
     @Override
     public ShortLinkStatsRespDTO oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
         // 基础访问详情
@@ -61,6 +65,33 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                             .build();
                     daily.add(accessDailyRespDTO);
                 }));
+
+        // 小时访问详情
+        List<Integer> hourStats = new ArrayList<>();
+        List<LinkAccessStatsDO> listHourStatsByShortLink = linkAccessStatsMapper.listHourStatsByShortLink(requestParam);
+        for (int i = 0; i < 24; i++) {
+            AtomicInteger hour = new AtomicInteger(i);
+            int hourCnt = listHourStatsByShortLink.stream()
+                    .filter(each -> Objects.equals(each.getHour(), hour.get()))
+                    .findFirst()
+                    .map(LinkAccessStatsDO::getPv)
+                    .orElse(0);
+            hourStats.add(hourCnt);
+        }
+
+        // 一周访问详情
+        List<Integer> weekdayStats = new ArrayList<>();
+        List<LinkAccessStatsDO> listWeekdayStatsByShortLink = linkAccessStatsMapper.listWeekdayStatsByShortLink(requestParam);
+        for (int i = 1; i < 8; i++) {
+            AtomicInteger weekday = new AtomicInteger(i);
+            int weekdayCnt = listWeekdayStatsByShortLink.stream()
+                    .filter(each -> Objects.equals(each.getWeekday(), weekday.get()))
+                    .findFirst()
+                    .map(LinkAccessStatsDO::getPv)
+                    .orElse(0);
+            weekdayStats.add(weekdayCnt);
+        }
+
         // 地区访问详情（仅国内）
         List<ShortLinkStatsLocaleCNRespDTO> localeCnStats = new ArrayList<>();
         List<LinkLocaleStatsDO> listedLocaleByShortLink = linkLocaleStatsMapper.listLocaleByShortLink(requestParam);
@@ -77,18 +108,6 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                     .build();
             localeCnStats.add(localeCNRespDTO);
         });
-        // 小时访问详情
-        List<Integer> hourStats = new ArrayList<>();
-        List<LinkAccessStatsDO> listHourStatsByShortLink = linkAccessStatsMapper.listHourStatsByShortLink(requestParam);
-        for (int i = 0; i < 24; i++) {
-            AtomicInteger hour = new AtomicInteger(i);
-            int hourCnt = listHourStatsByShortLink.stream()
-                    .filter(each -> Objects.equals(each.getHour(), hour.get()))
-                    .findFirst()
-                    .map(LinkAccessStatsDO::getPv)
-                    .orElse(0);
-            hourStats.add(hourCnt);
-        }
         // 高频访问IP详情
         List<ShortLinkStatsTopIpRespDTO> topIpStats = new ArrayList<>();
         List<HashMap<String, Object>> listTopIpByShortLink = linkAccessLogsMapper.listTopIpByShortLink(requestParam);
@@ -99,18 +118,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                     .build();
             topIpStats.add(statsTopIpRespDTO);
         });
-        // 一周访问详情
-        List<Integer> weekdayStats = new ArrayList<>();
-        List<LinkAccessStatsDO> listWeekdayStatsByShortLink = linkAccessStatsMapper.listWeekdayStatsByShortLink(requestParam);
-        for (int i = 1; i < 8; i++) {
-            AtomicInteger weekday = new AtomicInteger(i);
-            int weekdayCnt = listWeekdayStatsByShortLink.stream()
-                    .filter(each -> Objects.equals(each.getWeekday(), weekday.get()))
-                    .findFirst()
-                    .map(LinkAccessStatsDO::getPv)
-                    .orElse(0);
-            weekdayStats.add(weekdayCnt);
-        }
+
         // 浏览器访问详情
         List<ShortLinkStatsBrowserRespDTO> browserStats = new ArrayList<>();
         List<HashMap<String, Object>> listBrowserStatsByShortLink = linkBrowserStatsMapper.listBrowserStatsByShortLink(requestParam);
@@ -219,5 +227,40 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                 .deviceStats(deviceStats)
                 .networkStats(networkStats)
                 .build();
+    }
+
+    @Override
+    public IPage<ShortLinkStatsAccessRecordRespDTO> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+        LambdaQueryWrapper<LinkAccessLogsDO> queryWrapper = Wrappers.lambdaQuery(LinkAccessLogsDO.class)
+                .eq(LinkAccessLogsDO::getFullShortUrl, requestParam.getFullShortUrl())
+                .between(LinkAccessLogsDO::getCreateTime, requestParam.getStartDate(), requestParam.getEndDate())
+                .eq(LinkAccessLogsDO::getDelFlag, 0)
+                .orderByDesc(LinkAccessLogsDO::getCreateTime);
+        IPage<LinkAccessLogsDO> linkAccessLogsDOIPage = linkAccessLogsMapper.selectPage(requestParam, queryWrapper);
+        if (CollUtil.isEmpty(linkAccessLogsDOIPage.getRecords())) {
+            return new Page<>();
+        }
+        IPage<ShortLinkStatsAccessRecordRespDTO> actualResult = linkAccessLogsDOIPage.convert(each -> BeanUtil.toBean(each, ShortLinkStatsAccessRecordRespDTO.class));
+        List<String> userAccessLogsList = actualResult.getRecords().stream()
+                .map(ShortLinkStatsAccessRecordRespDTO::getUser)
+                .toList();
+        List<Map<String, Object>> uvTypeList = linkAccessLogsMapper.selectUvTypeByUsers(
+                requestParam.getGid(),
+                requestParam.getFullShortUrl(),
+                requestParam.getEnableStatus(),
+                requestParam.getStartDate(),
+                requestParam.getEndDate(),
+                userAccessLogsList
+        );
+        actualResult.getRecords().forEach(each -> {
+            String uvType = uvTypeList.stream()
+                    .filter(item -> Objects.equals(each.getUser(), item.get("user")))
+                    .findFirst()
+                    .map(item -> item.get("uvType"))
+                    .map(Object::toString)
+                    .orElse("旧访客");
+            each.setUvType(uvType);
+        });
+        return actualResult;
     }
 }

@@ -1,8 +1,11 @@
 package com.nageoffer.shortlink.shortlinkporject.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Result;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.result.Results;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkStatsReqDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkStatsAccessRecordRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkStatsRespDTO;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkStatsService;
 import lombok.RequiredArgsConstructor;
@@ -20,5 +23,8 @@ public class ShortLinkStatsController {
     public Result<ShortLinkStatsRespDTO> shortLinkStats(ShortLinkStatsReqDTO requestParam) {
         return Results.success(shortLinkStatsService.oneShortLinkStats(requestParam));
     }
-
+    @GetMapping("/api/short-link/v1/stats/access-record")
+    public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+        return Results.success(shortLinkStatsService.shortLinkStatsAccessRecord(requestParam));
+    }
 }
