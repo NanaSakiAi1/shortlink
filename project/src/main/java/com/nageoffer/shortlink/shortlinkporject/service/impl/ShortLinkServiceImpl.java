@@ -103,6 +103,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .describe(requestParam.getDescribe())
                 .shortUri(shortLinkSuffix)
                 .enableStatus(0)
+                .totalPv(0)
+                .totalUip(0)
+                .totalUv(0)
                 .fullShortUrl(fullShortUrl)
                 .favicon(getFavicon(requestParam.getOriginUrl()))
                 .build();
@@ -401,7 +404,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 linkLocaleStatsDO = LinkLocaleStatsDO.builder()
                         .fullShortUrl(fullShortUrl)
                         .province(actualProvince = unknownFlag ? "未知" : province)
-                        .city(actualCity=unknownFlag ? "未知" : city)
+                        .city(actualCity = unknownFlag ? "未知" : city)
                         .country("中国")
                         .adcode(unknownFlag ? "未知" : adcode)
                         .cnt(1)
@@ -452,14 +455,15 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                         .user(uv.get())
                         .ip(remoteAddr)
                         .browser(browser)
-                        .network( network)
-                        .locale(StrUtil.join("-","中国", actualProvince, actualCity))
+                        .network(network)
+                        .locale(StrUtil.join("-", "中国", actualProvince, actualCity))
                         .device(device)
                         .os(os)
                         .gid(gid)
                         .build();
 
                 linkAccessLogsMapper.insert(linkAccessLogsDO);
+                baseMapper.incrementStats(gid, fullShortUrl, 1, uvFirstFlag.get() ? 1 : 0, uipFirstFlag ? 1 : 0);
 
             }
         } catch (Throwable e) {
