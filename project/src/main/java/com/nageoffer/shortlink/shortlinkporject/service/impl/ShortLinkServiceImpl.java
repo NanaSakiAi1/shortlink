@@ -174,16 +174,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     /**
      * 更新短链接
      *
-     * @param ReqDTO
+     * @param requestParam
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateShortLink(ShortLinkUpdateReqDTO ReqDTO) {
+    public void updateShortLink(ShortLinkUpdateReqDTO requestParam) {
 
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, ReqDTO.getGid())
-                .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
+                .eq(ShortLinkDO::getGid, requestParam.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                 .eq(ShortLinkDO::getDelFlag, 0)
                 .eq(ShortLinkDO::getEnableStatus, 0);
 
@@ -196,24 +196,24 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .shortUri(hasShortLinkDO.getShortUri())
                 .favicon(hasShortLinkDO.getFavicon())
                 .createdType(hasShortLinkDO.getCreatedType())
-                .gid(ReqDTO.getGid())
-                .originUrl(ReqDTO.getOriginUrl())
-                .describe(ReqDTO.getDescribe())
-                .validDateType(ReqDTO.getValidDateType())
-                .validDate(ReqDTO.getValidDate())
+                .gid(requestParam.getGid())
+                .originUrl(requestParam.getOriginUrl())
+                .describe(requestParam.getDescribe())
+                .validDateType(requestParam.getValidDateType())
+                .validDate(requestParam.getValidDate())
                 .build();
-        if (Objects.equals(hasShortLinkDO.getGid(), ReqDTO.getGid())) {
+        if (Objects.equals(hasShortLinkDO.getGid(), requestParam.getGid())) {
             LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
-                    .eq(ShortLinkDO::getGid, ReqDTO.getGid())
+                    .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
+                    .eq(ShortLinkDO::getGid, requestParam.getGid())
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0)
-                    .set(Objects.equals(ReqDTO.getValidDateType(), PERMANENT.getType()), ShortLinkDO::getValidDate, null);
+                    .set(Objects.equals(requestParam.getValidDateType(), PERMANENT.getType()), ShortLinkDO::getValidDate, null);
 
             baseMapper.update(shortLinkDO, updateWrapper);
         } else {
             LambdaUpdateWrapper<ShortLinkDO> linkUpdateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, ReqDTO.getFullShortUrl())
+                    .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                     .eq(ShortLinkDO::getGid, hasShortLinkDO.getGid())
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0);
@@ -221,8 +221,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             baseMapper.insert(shortLinkDO);
 
         }
-
-        return;
+       if(!Objects.equals(hasShortLinkDO.getValidDateType(),requestParam.getValidDateType())||!Objects.equals(hasShortLinkDO.getValidDate(),requestParam.getValidDate())){
+           stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY,requestParam.getFullShortUrl()));
+       }
     }
 
     @SneakyThrows
