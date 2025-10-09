@@ -19,12 +19,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.shortlinkporject.common.convention.exception.ServiceException;
 import com.nageoffer.shortlink.shortlinkporject.dao.entity.*;
 import com.nageoffer.shortlink.shortlinkporject.dao.mapper.*;
+import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkBatchCreateReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.shortlinkporject.dto.req.ShortLinkUpdateReqDTO;
-import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkCreateRespDTO;
-import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkGroupCountQueryRespDTO;
-import com.nageoffer.shortlink.shortlinkporject.dto.resp.ShortLinkPageRespDTO;
+import com.nageoffer.shortlink.shortlinkporject.dto.resp.*;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkService;
 import com.nageoffer.shortlink.shortlinkporject.toolkit.HashUtil;
 import com.nageoffer.shortlink.shortlinkporject.toolkit.LinkUtil;
@@ -127,8 +126,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 throw new ServiceException("短链接生成重复");
             }
         }
-        String format = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
-        stringRedisTemplate.opsForValue().set(format, requestParam.getOriginUrl(), LinkUtil.getLinkCacheValidTime(requestParam.getValidDate()), TimeUnit.MILLISECONDS);
+        String gotoCacheKey = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
+        stringRedisTemplate.opsForValue().set(gotoCacheKey, requestParam.getOriginUrl(), LinkUtil.getLinkCacheValidTime(requestParam.getValidDate()), TimeUnit.MILLISECONDS);
 
         shortUriCreateCachePenetrationBloomFilter.add(fullShortUrl);
         return ShortLinkCreateRespDTO.builder()
@@ -369,7 +368,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             Long uipAdded = stringRedisTemplate.opsForSet().add("short-link:stats:uip:" + fullShortUrl, remoteAddr);
             boolean uipFirstFlag = uipAdded != null && uipAdded > 0;
             if (StrUtil.isBlank(gid)) {
-                gid = shortLinkGotoMapper.selectOne(new QueryWrapper<ShortLinkGotoDO>().eq("full_short_url", fullShortUrl)).getGid();
+                gid = shortLinkGotoMapper.selectOne(
+                        new QueryWrapper<ShortLinkGotoDO>().eq("full_short_url", fullShortUrl)
+                ).getGid();
             }
             int hour = DateUtil.hour(new Date(), true);
             Week week = DateUtil.dayOfWeekEnum(new Date());
@@ -482,6 +483,37 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
 
     /**
+     * 批量生成短链接
+     *
+     *
+     */
+    @Override
+    public ShortLinkBatchCreateRespDTO batchCreateShortLink(ShortLinkBatchCreateReqDTO requestParam) {
+        List<String> originUrls = requestParam.getOriginUrls();
+        List<String> describes = requestParam.getDescribes();
+        List<ShortLinkBaseInfoRespDTO> result = new ArrayList<>();
+        for (int i = 0; i < originUrls.size(); i++) {
+            ShortLinkCreateReqDTO shortLinkCreateReqDTO = BeanUtil.toBean(requestParam, ShortLinkCreateReqDTO.class);
+            shortLinkCreateReqDTO.setOriginUrl(originUrls.get(i));
+            shortLinkCreateReqDTO.setDescribe(describes.get(i));
+            try {
+                ShortLinkCreateRespDTO shortLink = createShortLink(shortLinkCreateReqDTO);
+                ShortLinkBaseInfoRespDTO linkBaseInfoRespDTO = ShortLinkBaseInfoRespDTO.builder()
+                        .fullShortUrl(shortLink.getFullShortUrl())
+                        .originUrl(shortLink.getOriginUrl())
+                        .describe(describes.get(i))
+                        .build();
+                result.add(linkBaseInfoRespDTO);
+            } catch (Throwable ex) {
+                log.error("批量创建短链接失败，原始参数：{}", originUrls.get(i));
+            }
+        }
+        return ShortLinkBatchCreateRespDTO.builder()
+                .total(result.size())
+                .baseLinkInfos(result)
+                .build();
+    }
+    /**
      * 生成短链接后缀
      *
      * @param requestParam
@@ -529,4 +561,5 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }
         return null;
     }
+
 }
