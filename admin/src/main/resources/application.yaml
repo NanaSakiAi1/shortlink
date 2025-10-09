@@ -21,3 +21,13 @@ spring:
     nacos:
       discovery:
         enabled: false
+        register-enabled: false
+      config:
+        enabled: false         # 若引了 nacos-config 也关掉
+management:
+  health:
+    nacos:
+      enabled: false
+short-link:
+  group:
+    max_num: 2
