@@ -28,7 +28,8 @@ short-link:
   stats:
     locale:
       amap-key: 423b8b25e4f3e7b473ab673a8ea1fa1a
-
+  domain:
+    default: nurl.ink:8001
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

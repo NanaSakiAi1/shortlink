@@ -80,6 +80,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkStatsTodayMapper linkStatsTodayMapper;
     @Value("${short-link.stats.locale.amap-key}")
     private String statsLocaleAmapKey;
+    @Value("${short-link.domain.default}")
+    private String createShortLinkDefaultDomain;
 
     /**
      * 创建短链接
@@ -89,12 +91,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) {
         String shortLinkSuffix = generateSuffix(requestParam);
-        String fullShortUrl = StrBuilder.create(requestParam.getDomain())
+        String fullShortUrl = StrBuilder.create(createShortLinkDefaultDomain)
                 .append("/")
                 .append(shortLinkSuffix)
                 .toString();
         ShortLinkDO shortLinkDO = ShortLinkDO.builder()
-                .domain(requestParam.getDomain())
+                .domain(createShortLinkDefaultDomain)
                 .originUrl(requestParam.getOriginUrl())
                 .gid(requestParam.getGid())
                 .createdType(requestParam.getCreatedType())
@@ -229,7 +231,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     public void restoreUrl(String shortUri, ServletRequest request, ServletResponse response) {
         HttpServletRequest httpReq = (HttpServletRequest) request;
         HttpServletResponse httpResp = (HttpServletResponse) response;
-
+        String serverPort = Optional.of(request.getServerPort())
+                .filter(each -> !Objects.equals(each, 80))
+                .map(String::valueOf)
+                .map(each -> ":" + each)
+                .orElse("");
         // 1) 计算 fullShortUrl：只用「域名 + / + 短码」，不要协议和端口
         String host = httpReq.getServerName(); // e.g. "nurl.ink"
         // 如果有反向代理，优先 X-Forwarded-Host（可选）
@@ -240,7 +246,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             int colon = first.indexOf(':');
             host = colon > -1 ? first.substring(0, colon) : first;
         }
-        String fullShortUrl = host + "/" + shortUri;
+        String fullShortUrl = host + serverPort+"/" + shortUri;
 
         // 2) 先查缓存，命中直接用缓存值跳转（不要再用 shortLinkDO）
         String gotoCacheKey = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
