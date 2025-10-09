@@ -221,9 +221,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             baseMapper.insert(shortLinkDO);
 
         }
-       if(!Objects.equals(hasShortLinkDO.getValidDateType(),requestParam.getValidDateType())||!Objects.equals(hasShortLinkDO.getValidDate(),requestParam.getValidDate())){
-           stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY,requestParam.getFullShortUrl()));
-       }
+        if (!Objects.equals(hasShortLinkDO.getValidDateType(), requestParam.getValidDateType()) || !Objects.equals(hasShortLinkDO.getValidDate(), requestParam.getValidDate())) {
+            stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY, requestParam.getFullShortUrl()));
+            if (hasShortLinkDO.getValidDate() != null && hasShortLinkDO.getValidDate().before(new Date())) {
+                if (Objects.equals(requestParam.getValidDate(), PERMANENT.getType())
+                        || requestParam.getValidDate().after(new Date())
+                ) {
+                stringRedisTemplate.delete(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, requestParam.getFullShortUrl()));
+                }
+            }
+        }
     }
 
     @SneakyThrows
@@ -246,7 +253,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             int colon = first.indexOf(':');
             host = colon > -1 ? first.substring(0, colon) : first;
         }
-        String fullShortUrl = host + serverPort+"/" + shortUri;
+        String fullShortUrl = host + serverPort + "/" + shortUri;
 
         // 2) 先查缓存，命中直接用缓存值跳转（不要再用 shortLinkDO）
         String gotoCacheKey = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
@@ -485,8 +492,6 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     /**
      * 批量生成短链接
-     *
-     *
      */
     @Override
     public ShortLinkBatchCreateRespDTO batchCreateShortLink(ShortLinkBatchCreateReqDTO requestParam) {
@@ -514,6 +519,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .baseLinkInfos(result)
                 .build();
     }
+
     /**
      * 生成短链接后缀
      *
