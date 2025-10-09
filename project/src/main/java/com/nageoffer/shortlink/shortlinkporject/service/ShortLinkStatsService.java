@@ -44,5 +44,7 @@ public interface ShortLinkStatsService {
      * @return 分组访问记录监控数据
      */
     IPage<ShortLinkStatsAccessRecordRespDTO> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam);
+
+
 }
 

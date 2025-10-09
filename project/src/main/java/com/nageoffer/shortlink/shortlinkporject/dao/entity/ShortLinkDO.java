@@ -109,5 +109,10 @@ public class ShortLinkDO extends BaseDO {
     @TableField("`describe`")
     private String describe;
 
+    /**
+     * 删除时间
+     */
+    private Long delTime;
+
 
 }
