@@ -36,7 +36,7 @@ public class UserFlowRiskControlFilter implements Filter {
     private final StringRedisTemplate stringRedisTemplate;
     private final UserFlowRiskControlConfiguration userFlowRiskControlConfiguration;
 
-    private static final String USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH = "lua/user_flow_risk_control.lua";
+    private static final String USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH = "resources/lua/user_flow_risk_controller.lua";
 
     @SneakyThrows
     @Override

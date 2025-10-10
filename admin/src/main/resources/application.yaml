@@ -33,5 +33,5 @@ short-link:
     max_num: 2
   flow-limit:
     enable: true
-    time-window: 1
+    time-window: 30
     max-access-count: 20
