@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
+import static com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant.USER_LOGIN_KEY;
 
 @Service
 @RequiredArgsConstructor
@@ -123,7 +124,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new ClientException(UserErrorCodeEnum.USER_NULL);
         }
 
-        String key = "login_" + ReqDTO.getUsername();
+        String key = USER_LOGIN_KEY + ReqDTO.getUsername();
         stringRedisTemplate.delete(key);
         // 如果你想“同一用户只能单会话”，就先删旧会话（整个 hash）
         // stringRedisTemplate.delete(key);
@@ -157,7 +158,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public Boolean checkLogin(String username , String token) {
 
-        return stringRedisTemplate.opsForHash().get("login_"+username, token)!=null;
+        return stringRedisTemplate.opsForHash().get(USER_LOGIN_KEY+username, token)!=null;
     }
     /**
      * 用户登出
@@ -166,7 +167,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public void logout(String username, String token) {
         if(checkLogin(username,token)){
-            stringRedisTemplate.opsForHash().delete("login_"+username, token);
+            stringRedisTemplate.opsForHash().delete(USER_LOGIN_KEY+username, token);
             return  ;
         }
         throw new ClientException("用户TOKNE不存在或用户未登录");

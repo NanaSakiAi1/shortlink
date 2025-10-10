@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Objects;
 
+import static com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant.USER_LOGIN_KEY;
 import static com.nageoffer.shortlink.admin.common.convention.errorcode.BaseErrorCode.IDEMPOTENT_TOKEN_NULL_ERROR;
 
 /**
@@ -64,7 +65,7 @@ public class UserTransmitFilter implements Filter {
                     return;
                 }
 
-                String key = "login_" + username;
+                String key = USER_LOGIN_KEY + username;
                 Object userInfoJsonStr;
                 try {
                     userInfoJsonStr = stringRedisTemplate.opsForHash().get(key, token);
