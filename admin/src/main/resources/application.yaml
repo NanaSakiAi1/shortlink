@@ -31,3 +31,7 @@ management:
 short-link:
   group:
     max_num: 2
+  flow-limit:
+    enable: true
+    time-window: 1
+    max-access-count: 20
