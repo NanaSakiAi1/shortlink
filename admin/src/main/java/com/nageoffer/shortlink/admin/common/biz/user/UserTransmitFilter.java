@@ -50,12 +50,34 @@ public class UserTransmitFilter implements Filter {
                 // ========= 其余请求，执行你原来的鉴权逻辑 =========
                 // 既兼容 Authorization 也兼容 token（优先 Authorization）
                 String token = httpReq.getHeader("Authorization");
-                if (token == null || token.isEmpty()) {
+                if (StrUtil.isBlank(token)) {
                     token = httpReq.getHeader("token");
+                    if (StrUtil.isBlank(token)) {
+                        // 兼容大小写变体
+                        token = httpReq.getHeader("Token");
+                    }
+                } else {
+                    // 兼容 "Bearer xxx" 形态，去掉前缀再参与 Redis 校验
+                    token = token.trim();
+                    if (StrUtil.startWithIgnoreCase(token, "Bearer ")) {
+                        token = token.substring("Bearer ".length()).trim();
+                    }
                 }
-                // username 仍然从头里取；如果你想只靠 token 也能找回用户名，见下「可选增强」
+
+                // username 仍然从头里取；再做大小写回退并去空格
                 String username = httpReq.getHeader("username");
+                if (StrUtil.isBlank(username)) {
+                    username = httpReq.getHeader("Username");
+                }
+                if (username != null) {
+                    username = username.trim();
+                }
+                if (token != null) {
+                    token = token.trim();
+                }
+
                 log.info("headers username={}, token={}", username, token);
+
                 if (!StrUtil.isAllNotBlank(token, username)) {
                     try {
                         returnJson((HttpServletResponse) res, JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
@@ -72,7 +94,6 @@ public class UserTransmitFilter implements Filter {
                     if (userInfoJsonStr == null) {
                         throw new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR);
                     }
-
                 } catch (Exception e) {
                     try {
                         returnJson((HttpServletResponse) res, JSON.toJSONString(Results.failure(new ClientException(IDEMPOTENT_TOKEN_NULL_ERROR))));
@@ -81,13 +102,14 @@ public class UserTransmitFilter implements Filter {
                     }
                     return;
                 }
+
                 // 将 Redis 里的 JSON 解析成用户信息对象
                 UserInfoDTO userInfoDTO = JSON.parseObject(userInfoJsonStr.toString(), UserInfoDTO.class);
 
-                // ✅ Redis 里没存 token，要手动补回来
+                // ✅ Redis 里没存 token，要手动补回来（保持你原有做法）
                 userInfoDTO.setToken(token);
 
-                // 存入 ThreadLocal
+                // 存入 ThreadLocal（保持你原有调用点）
                 UserContext.setUser(userInfoDTO);
             }
         }
@@ -97,6 +119,7 @@ public class UserTransmitFilter implements Filter {
             UserContext.removeUser();
         }
     }
+
     private void returnJson(HttpServletResponse response, String json) throws Exception {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=utf-8");
@@ -107,5 +130,3 @@ public class UserTransmitFilter implements Filter {
         writer.close();
     }
 }
-
-

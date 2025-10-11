@@ -13,7 +13,7 @@ import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
-import com.nageoffer.shortlink.admin.remote.ShortLinkRemoteService;
+import com.nageoffer.shortlink.admin.remote.ShortLinkActualRemoteService;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.tollkit.RandomGenerator;
@@ -41,8 +41,8 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
     private final RedissonClient redissonClient;
     @Value("${short-link.group.max_num}")
     private  Integer groupMaxNum;
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-    };
+    private final ShortLinkActualRemoteService shortLinkActualRemoteService;
+
 
     /**
      * 创建短连接分组
@@ -105,8 +105,8 @@ public class GrouptServiceImpl extends ServiceImpl<GroupMapper, GroupDO> impleme
         Map<String, Integer> countMap = new HashMap<>(gidList.size());
         try {
             if (!gidList.isEmpty()) {
-                Result<List<ShortLinkGroupCountQueryRespDTO>> listResult =
-                        shortLinkRemoteService.listGroupShortLinkCount(gidList);
+                Result<List<ShortLinkGroupCountQueryRespDTO>> listResult = shortLinkActualRemoteService
+                        .listGroupShortLinkCount(groupDOList.stream().map(GroupDO::getGid).toList());
                 if (listResult != null && listResult.getData() != null) {
                     listResult.getData().forEach(item -> {
                         if (item != null) {

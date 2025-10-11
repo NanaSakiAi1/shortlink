@@ -64,4 +64,8 @@ public final class UserContext {
     public static UserInfoDTO getUser() {
         return USER_THREAD_LOCAL.get();
     }
+    public static String getToken() {
+        UserInfoDTO userInfoDTO = USER_THREAD_LOCAL.get();
+        return Optional.ofNullable(userInfoDTO).map(UserInfoDTO::getToken).orElse(null);
+    }
 }

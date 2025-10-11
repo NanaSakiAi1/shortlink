@@ -4,6 +4,9 @@ logging.level.org.springframework.web: DEBUG
 server.error.include-message: always
 
 spring:
+  application:
+    name: short-link-project
+
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
     # ShardingSphere 配置文件路径
@@ -14,16 +17,15 @@ spring:
       port: 6379
       password: 20030106dnd    # ← 填你的 Redis 密码
       database: 0
-
   mvc:
     view:
       prefix: /templates/
       suffix: .html
-
   cloud:
     nacos:
       discovery:
-        enabled: false
+        service: short-link-project
+        server-addr: 127.0.0.1:8848
 
 short-link:
   stats:

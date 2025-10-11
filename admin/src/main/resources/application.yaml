@@ -1,6 +1,8 @@
 server:
   port: 8002
 spring:
+  application:
+    name: short-link-admin
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
     # ShardingSphere 配置文件路径
@@ -14,16 +16,19 @@ spring:
   # application.yml
   logging:
     level:
-      root: info
-      com.nageoffer: debug
+      com.nageoffer.shortlink.admin.remote: DEBUG
+      feign: DEBUG
+
+  feign:
+    client:
+      config:
+        default:
+          loggerLevel: FULL
 
   cloud:
     nacos:
       discovery:
-        enabled: false
-        register-enabled: false
-      config:
-        enabled: false         # 若引了 nacos-config 也关掉
+        server-addr: 127.0.0.1:8848        # 若引了 nacos-config 也关掉
 management:
   health:
     nacos:
