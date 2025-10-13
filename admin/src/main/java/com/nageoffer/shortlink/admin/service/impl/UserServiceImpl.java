@@ -1,13 +1,12 @@
 package com.nageoffer.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
-import com.nageoffer.shortlink.admin.common.biz.user.UserInfoDTO;
 import com.nageoffer.shortlink.admin.common.convention.exception.ClientException;
 import com.nageoffer.shortlink.admin.common.enums.UserErrorCodeEnum;
 import com.nageoffer.shortlink.admin.dao.entity.UserDO;
@@ -28,6 +27,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -109,46 +109,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     }
     /**
      * 用户登录
-     * @param ReqDTO
+     * @param requestParam
      * @return
      */
     @Override
-    public UserLoginRespDTO Login(UserLoginReqDTO ReqDTO) {
-        UserDO userDO = baseMapper.selectOne(
-                Wrappers.<UserDO>lambdaQuery()
-                        .eq(UserDO::getUsername, ReqDTO.getUsername())
-                        .eq(UserDO::getPassword, ReqDTO.getPassword())
-                        .eq(UserDO::getDelFlag, 0)
-        );
+    public UserLoginRespDTO Login(UserLoginReqDTO requestParam) {
+        LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
+                .eq(UserDO::getUsername, requestParam.getUsername())
+                .eq(UserDO::getPassword, requestParam.getPassword())
+                .eq(UserDO::getDelFlag, 0);
+        UserDO userDO = baseMapper.selectOne(queryWrapper);
         if (userDO == null) {
-            throw new ClientException(UserErrorCodeEnum.USER_NULL);
+            throw new ClientException("用户不存在");
         }
-
-        String key = USER_LOGIN_KEY + ReqDTO.getUsername();
-        stringRedisTemplate.delete(key);
-        // 如果你想“同一用户只能单会话”，就先删旧会话（整个 hash）
-        // stringRedisTemplate.delete(key);
-
-        // 如果你想“允许多会话”，就不要做 hasKey 拦截，直接新增一个 field 即可
-        // 若要严格单会话，请保留 delete(key) 或判断 HLEN>0 后拒绝
-        Boolean exist = stringRedisTemplate.hasKey(key);
-        if (exist) {
-            throw new ClientException("用户已登录");
+        Map<Object, Object> hasLoginMap = stringRedisTemplate.opsForHash().entries(USER_LOGIN_KEY + requestParam.getUsername());
+        if (CollUtil.isNotEmpty(hasLoginMap)) {
+            stringRedisTemplate.expire(USER_LOGIN_KEY + requestParam.getUsername(), 30L, TimeUnit.MINUTES);
+            String token = hasLoginMap.keySet().stream()
+                    .findFirst()
+                    .map(Object::toString)
+                    .orElseThrow(() -> new ClientException("用户登录错误"));
+            return new UserLoginRespDTO(token);
         }
-
-        String token = UUID.randomUUID().toString();
-
-        stringRedisTemplate.opsForHash().put(key, token, JSON.toJSONString(userDO));
-        stringRedisTemplate.expire(key, 30, TimeUnit.DAYS);
-        UserContext.setUser(
-               UserInfoDTO.builder()
-                        .userId(String.valueOf(userDO.getId()))
-                        .username(userDO.getUsername())
-                        .realName(userDO.getRealName())
-                        .token(token)
-                        .build()
-        );
-        return new UserLoginRespDTO(token);
+        /**
+         * Hash
+         * Key：login_用户名
+         * Value：
+         *  Key：token标识
+         *  Val：JSON 字符串（用户信息）
+         */
+        String uuid = UUID.randomUUID().toString();
+        stringRedisTemplate.opsForHash().put(USER_LOGIN_KEY + requestParam.getUsername(), uuid, JSON.toJSONString(userDO));
+        stringRedisTemplate.expire(USER_LOGIN_KEY + requestParam.getUsername(), 30L, TimeUnit.MINUTES);
+        return new UserLoginRespDTO(uuid);
     }
     /**
      * 验证用户登录

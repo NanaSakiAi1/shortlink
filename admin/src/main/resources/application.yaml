@@ -35,7 +35,7 @@ management:
       enabled: false
 short-link:
   group:
-    max_num: 2
+    max_num: 10
   flow-limit:
     enable: true
     time-window: 30

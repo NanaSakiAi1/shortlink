@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Spring Boot 父 POM -->
+    <!-- 只在根里继承 Spring Boot 的 parent，统一版本基线 -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -29,9 +29,8 @@
         <spring-cloud.version>2022.0.3</spring-cloud.version>
         <spring-cloud-alibaba.version>2022.0.0.0-RC2</spring-cloud-alibaba.version>
 
-        <!-- 数据库与工具 -->
+        <!-- 统一三方版本（必要的才放这里） -->
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
-        <mybatis-spring-boot-starter.version>3.0.5</mybatis-spring-boot-starter.version>
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <shardingsphere.version>5.3.2</shardingsphere.version>
         <redisson.version>3.27.2</redisson.version>
@@ -43,15 +42,19 @@
         <dozer-core.version>6.5.2</dozer-core.version>
         <jsoup.version>1.15.3</jsoup.version>
     </properties>
+
+    <!-- 根里可以放通用依赖（无版本，由 Boot BOM 管理） -->
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
+
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Cloud BOM -->
+            <!-- Spring Cloud BOM（和 Boot 3.0.x 匹配） -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -60,7 +63,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Spring Cloud Alibaba BOM -->
+            <!-- Spring Cloud Alibaba BOM（与上面 Cloud 版本配套） -->
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-alibaba-dependencies</artifactId>
@@ -69,64 +72,67 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- MyBatis 版本统一管理 -->
-
+            <!-- MyBatis / 其他三方库的版本收敛（这里只保留一份，去掉重复项） -->
             <dependency>
                 <groupId>org.mybatis</groupId>
                 <artifactId>mybatis-spring</artifactId>
                 <version>${mybatis-spring.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
-                <version>3.5.6</version> <!-- 确保有这个 -->
-            </dependency>
-            <!-- 其他依赖版本 -->
+
             <dependency>
                 <groupId>org.apache.shardingsphere</groupId>
                 <artifactId>shardingsphere-jdbc-core</artifactId>
                 <version>${shardingsphere.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>easyexcel</artifactId>
                 <version>${easyexcel.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.alibaba.fastjson2</groupId>
                 <artifactId>fastjson2</artifactId>
                 <version>${fastjson2.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool-all.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.github.dozermapper</groupId>
                 <artifactId>dozer-core</artifactId>
                 <version>${dozer-core.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
@@ -145,6 +151,8 @@
                     <release>17</release>
                 </configuration>
             </plugin>
+
+            <!-- 根保留也可以；真正的可执行包由子模块打 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
