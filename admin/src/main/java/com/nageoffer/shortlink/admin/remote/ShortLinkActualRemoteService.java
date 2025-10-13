@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * 短链接服务接口
  */
-@FeignClient(value = "short-link-project",configuration = com.nageoffer.shortlink.admin.config.FeignHeaderPropagateConfig.class)
+@FeignClient(value = "short-link-project",configuration = com.nageoffer.shortlink.admin.config.FeignHeaderPropagateConfig.class,url = "${aggregation.remote-url:}")
 public interface ShortLinkActualRemoteService {
     /**
      * 创建短链接

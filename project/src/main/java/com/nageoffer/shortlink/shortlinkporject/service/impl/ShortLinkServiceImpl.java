@@ -29,6 +29,7 @@ import com.nageoffer.shortlink.shortlinkporject.service.LinkStatsTodayService;
 import com.nageoffer.shortlink.shortlinkporject.service.ShortLinkService;
 import com.nageoffer.shortlink.shortlinkporject.toolkit.HashUtil;
 import com.nageoffer.shortlink.shortlinkporject.toolkit.LinkUtil;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
@@ -68,7 +69,8 @@ import static com.nageoffer.shortlink.shortlinkporject.common.enums.ValidDateTyp
 @RequiredArgsConstructor
 public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
     private final StringRedisTemplate stringRedisTemplate;
-    private final RBloomFilter<String> shortUriCreateCachePenetrationBloomFilter;
+    @Resource(name = "shortUriCreateCachePenetrationBloomFilter")
+    private  RBloomFilter<String> shortUriCreateCachePenetrationBloomFilter;
     private final ShortLinkGotoMapper shortLinkGotoMapper;
     private final RedissonClient redissonClient;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
@@ -86,6 +88,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
+
+
+
 
     /**
      * 创建短链接

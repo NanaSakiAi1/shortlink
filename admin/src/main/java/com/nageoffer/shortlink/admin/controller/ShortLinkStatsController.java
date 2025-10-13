@@ -1,6 +1,5 @@
 package com.nageoffer.shortlink.admin.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
@@ -14,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController(value = "shortLinkStatsControllerByAdmin")
 @RequiredArgsConstructor
 public class ShortLinkStatsController {
     private final ShortLinkActualRemoteService shortLinkActualRemoteService;

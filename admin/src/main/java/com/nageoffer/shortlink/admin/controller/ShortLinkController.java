@@ -28,7 +28,7 @@ import java.util.List;
  *
  *
  */
-@RestController
+@RestController(value = "shortLinkControllerByAdmin")
 @RequiredArgsConstructor
 @Slf4j
 public class ShortLinkController {

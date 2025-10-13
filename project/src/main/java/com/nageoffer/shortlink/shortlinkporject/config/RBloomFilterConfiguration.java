@@ -14,8 +14,8 @@ public class RBloomFilterConfiguration {
     /**
      * 防止短连接生产查询数据库的布隆过滤器
      */
-    @Bean
-    public RBloomFilter<String> shortUriCreateCachePenetrationBloomFilter(RedissonClient redissonClient) {
+    @Bean("shortUriCreateCachePenetrationBloomFilter")
+    public RBloomFilter<String> shortUriCreateCachePenetcrationBloomFilter(RedissonClient redissonClient) {
         RBloomFilter<String> cachePenetrationBloomFilter = redissonClient.getBloomFilter("shortUriCreateCachePenetrationBloomFilter");
         cachePenetrationBloomFilter.tryInit(1000000L, 0.001);
         return cachePenetrationBloomFilter;

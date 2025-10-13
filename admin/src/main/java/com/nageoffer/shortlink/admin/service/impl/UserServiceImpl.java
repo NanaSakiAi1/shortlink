@@ -18,6 +18,7 @@ import com.nageoffer.shortlink.admin.dto.resp.UserLoginRespDTO;
 import com.nageoffer.shortlink.admin.dto.resp.UserRespDTO;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.service.UserService;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
@@ -37,7 +38,7 @@ import static com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant.U
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements UserService {
-
+    @Resource(name = "userRegisterCachePenetrationBloomFilter")
     private final RBloomFilter<String> userRegisterCachePenetrationBloomFilte;
     private final RedissonClient redissonClient;
     private final StringRedisTemplate stringRedisTemplate;
