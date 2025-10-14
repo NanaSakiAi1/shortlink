@@ -42,6 +42,7 @@
         <guava.version>30.0-jre</guava.version>
         <dozer-core.version>6.5.2</dozer-core.version>
         <jsoup.version>1.15.3</jsoup.version>
+        <rocketmq-spring-boot-starter.version>2.3.0</rocketmq-spring-boot-starter.version>
     </properties>
 
     <!-- 根里可以放通用依赖（无版本，由 Boot BOM 管理） -->
@@ -139,7 +140,13 @@
                 <artifactId>jsoup</artifactId>
                 <version>${jsoup.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq-spring-boot-starter.version}</version>
+            </dependency>
         </dependencies>
+
     </dependencyManagement>
 
     <build>

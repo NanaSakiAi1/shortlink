@@ -33,12 +33,12 @@ public class MessageQueueIdempotentHandler {
      *
      * @param messageId 短链接ID
      */
-    public Boolean isAccomplished(String messageId){
+    public Boolean isAccomplish(String messageId){
         String key = IDEMPOTENT_KEY_PREFIX + messageId;
         return Objects.equals(stringRedisTemplate.opsForValue().get(key),1);
     }
 
-    public void setAccomplished(String messageId){
+    public void setAccomplish(String messageId){
         String key = IDEMPOTENT_KEY_PREFIX + messageId;
         stringRedisTemplate.opsForValue().setIfAbsent(key,"1",2, TimeUnit.MINUTES);
     }
