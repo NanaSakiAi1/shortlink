@@ -20,6 +20,7 @@ import static com.nageoffer.shortlink.shortlinkporject.common.constant.RedisKeyC
  */
 @Component
 @RequiredArgsConstructor
+@Deprecated
 public class DelayShortLinkStatsProducer {
 
     private final RedissonClient redissonClient;
