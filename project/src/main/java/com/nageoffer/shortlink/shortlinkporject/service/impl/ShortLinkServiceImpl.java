@@ -282,106 +282,71 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @SneakyThrows
     @Override
     public void restoreUrl(String shortUri, ServletRequest request, ServletResponse response) {
-        HttpServletRequest httpReq = (HttpServletRequest) request;
-        HttpServletResponse httpResp = (HttpServletResponse) response;
+        // 短链接接口的并发量有多少？如何测试？详情查看：https://nageoffer.com/shortlink/question
+        // 面试中如何回答短链接是如何跳转长链接？详情查看：https://nageoffer.com/shortlink/question
+        String serverName = request.getServerName();
         String serverPort = Optional.of(request.getServerPort())
                 .filter(each -> !Objects.equals(each, 80))
                 .map(String::valueOf)
                 .map(each -> ":" + each)
                 .orElse("");
-        // 1) 计算 fullShortUrl：只用「域名 + / + 短码」，不要协议和端口
-        String host = httpReq.getServerName(); // e.g. "nurl.ink"
-        // 如果有反向代理，优先 X-Forwarded-Host（可选）
-        String forwardedHost = httpReq.getHeader("X-Forwarded-Host");
-        if (StrUtil.isNotBlank(forwardedHost)) {
-            // 只取第一个并去掉端口
-            String first = forwardedHost.split(",")[0].trim();
-            int colon = first.indexOf(':');
-            host = colon > -1 ? first.substring(0, colon) : first;
-        }
-        String fullShortUrl = host + serverPort + "/" + shortUri;
-
-        // 2) 先查缓存，命中直接用缓存值跳转（不要再用 shortLinkDO）
-        String gotoCacheKey = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
-        String originalLink = stringRedisTemplate.opsForValue().get(gotoCacheKey);
+        String fullShortUrl = serverName + serverPort + "/" + shortUri;
+        String originalLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalLink)) {
-            ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
-            shortLinkStats(statsRecord);
-            httpResp.sendRedirect(originalLink);
+            shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, request, response));
+            ((HttpServletResponse) response).sendRedirect(originalLink);
             return;
         }
-
-        // 3) 布隆过滤器兜底：不存在直接 404
-        boolean mightExist = shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl);
-        if (!mightExist) {
-            httpResp.sendRedirect("/page/notfound");
+        boolean contains = shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl);
+        if (!contains) {
+            ((HttpServletResponse) response).sendRedirect("/page/notfound");
             return;
         }
-
-        // 4) 频繁找不到的短链的短期封控
-        String nullFlag = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
-        if (StrUtil.isNotBlank(nullFlag)) {
-            httpResp.sendRedirect("/page/notfound");
+        String gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
+        if (StrUtil.isNotBlank(gotoIsNullShortLink)) {
+            ((HttpServletResponse) response).sendRedirect("/page/notfound");
             return;
         }
-
-        // 5) 加锁防击穿
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK_KEY, fullShortUrl));
         lock.lock();
         try {
-            // 双检一次缓存，避免并发期间已被别人写入
-            originalLink = stringRedisTemplate.opsForValue().get(gotoCacheKey);
+            originalLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalLink)) {
-                ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
-                shortLinkStats( statsRecord);
-                httpResp.sendRedirect(originalLink);
+                shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, request, response));
+                ((HttpServletResponse) response).sendRedirect(originalLink);
                 return;
             }
-
-            // 6) 先从 t_link_goto 找到 gid，再到 t_link 精确查
+            gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
+            if (StrUtil.isNotBlank(gotoIsNullShortLink)) {
+                ((HttpServletResponse) response).sendRedirect("/page/notfound");
+                return;
+            }
             LambdaQueryWrapper<ShortLinkGotoDO> linkGotoQueryWrapper = Wrappers.lambdaQuery(ShortLinkGotoDO.class)
                     .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(linkGotoQueryWrapper);
             if (shortLinkGotoDO == null) {
-                // 标记短期 notfound，避免穿透
-                stringRedisTemplate.opsForValue().set(
-                        String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl),
-                        "-",
-                        30, TimeUnit.SECONDS
-                );
-                httpResp.sendRedirect("/page/notfound");
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.MINUTES);
+                ((HttpServletResponse) response).sendRedirect("/page/notfound");
                 return;
             }
-
             LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                     .eq(ShortLinkDO::getGid, shortLinkGotoDO.getGid())
                     .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0);
             ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
-
-            // 7) 没查到，或已过期（注意 validDate 可能为 null：永久有效）
             if (shortLinkDO == null || (shortLinkDO.getValidDate() != null && shortLinkDO.getValidDate().before(new Date()))) {
-                stringRedisTemplate.opsForValue().set(
-                        String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl),
-                        "-",
-                        30, TimeUnit.SECONDS
-                );
-                httpResp.sendRedirect("/page/notfound");
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.MINUTES);
+                ((HttpServletResponse) response).sendRedirect("/page/notfound");
                 return;
             }
-
-            // 8) 回填缓存并跳转（这时一定用 shortLinkDO 的 originUrl）
             stringRedisTemplate.opsForValue().set(
-                    gotoCacheKey,
+                    String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
                     shortLinkDO.getOriginUrl(),
-                    LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()),
-                    TimeUnit.MILLISECONDS
+                    LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()), TimeUnit.MILLISECONDS
             );
-
-            ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
-            shortLinkStats(statsRecord);
-            httpResp.sendRedirect(shortLinkDO.getOriginUrl());
+            shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, request, response));
+            ((HttpServletResponse) response).sendRedirect(shortLinkDO.getOriginUrl());
         } finally {
             lock.unlock();
         }
