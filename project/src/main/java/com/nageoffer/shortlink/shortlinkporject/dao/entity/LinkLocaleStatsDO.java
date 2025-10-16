@@ -30,7 +30,6 @@ public class LinkLocaleStatsDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String gid;
 
     /**
      * 完整短链接

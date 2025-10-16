@@ -88,5 +88,9 @@ public class ShortLinkPageRespDTO{
      */
     @TableField("`describe`")
     private String describe;
+    /**
+     * 启用标识 0：启用 1：未启用
+     */
+    private Integer enableStatus;
 
 }

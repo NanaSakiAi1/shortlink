@@ -29,7 +29,6 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.nageoffer.shortlink.shortlinkporject.common.constant.RedisKeyConstant.LOCK_GID_UPDATE_KEY;
 import static com.nageoffer.shortlink.shortlinkporject.common.constant.ShortLinkConstant.AMAP_REMOTE_URL;
@@ -37,7 +36,6 @@ import static com.nageoffer.shortlink.shortlinkporject.common.constant.ShortLink
 
 /**
  * 短链接监控状态保存消息队列消费者
- *
  */
 @Slf4j
 @Component
@@ -66,20 +64,16 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
     public void onMessage(MapRecord<String, String, String> message) {
         String stream = message.getStream();
         RecordId id = message.getId();
-        if(!messageQueueIdempotentHandler.isMessageProcessed(id.toString())){
-            if(messageQueueIdempotentHandler.isAccomplished(id.toString())){
+        if (!messageQueueIdempotentHandler.isMessageProcessed(id.toString())) {
+            if (messageQueueIdempotentHandler.isAccomplished(id.toString())) {
                 return;
             }
             throw new ServiceException("消息未完成流程，需要消息队列重试");
         }
         try {
-            Map<String,String> produceMap = message.getValue();
-            String fullShortUrl = produceMap.get("fullShortUrl");
-            if(StrUtil.isNotBlank(fullShortUrl)){
-                String gid = produceMap.get("gid");
-                ShortLinkStatsRecordDTO statsRecord = JSON.parseObject(produceMap.get("statsRecord"), ShortLinkStatsRecordDTO.class);
-                actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
-            }
+            Map<String, String> producerMap = message.getValue();
+            ShortLinkStatsRecordDTO statsRecord = JSON.parseObject(producerMap.get("statsRecord"), ShortLinkStatsRecordDTO.class);
+            actualSaveShortLinkStats(statsRecord);
             stringRedisTemplate.opsForStream().delete(message.getStream(), message.getId().getValue());
         } catch (Throwable ex) {
             messageQueueIdempotentHandler.delMessageProcessed(id.toString());
@@ -89,18 +83,16 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
     }
 
 
-    public void actualSaveShortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO statsRecord) {
-        fullShortUrl = Optional.ofNullable(fullShortUrl).orElse(statsRecord.getFullShortUrl());
+    public void actualSaveShortLinkStats(ShortLinkStatsRecordDTO statsRecord){
+        String fullShortUrl = statsRecord.getFullShortUrl();
         RReadWriteLock readWriteLock = redissonClient.getReadWriteLock(String.format(LOCK_GID_UPDATE_KEY, fullShortUrl));
         RLock rLock = readWriteLock.readLock();
         rLock.lock();
         try {
-            if (StrUtil.isBlank(gid)) {
-                LambdaQueryWrapper<ShortLinkGotoDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkGotoDO.class)
-                        .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
-                ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(queryWrapper);
-                gid = shortLinkGotoDO.getGid();
-            }
+            LambdaQueryWrapper<ShortLinkGotoDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkGotoDO.class)
+                    .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
+            ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(queryWrapper);
+            String gid = shortLinkGotoDO.getGid();
             int hour = DateUtil.hour(new Date(), true);
             Week week = DateUtil.dayOfWeekEnum(new Date());
             int weekValue = week.getIso8601Value();
@@ -111,7 +103,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                     .hour(hour)
                     .weekday(weekValue)
                     .fullShortUrl(fullShortUrl)
-                    .gid(gid)
+
                     .date(new Date())
                     .build();
             linkAccessStatsMapper.shortLinkStats(linkAccessStatsDO);
@@ -133,7 +125,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                         .cnt(1)
                         .fullShortUrl(fullShortUrl)
                         .country("中国")
-                        .gid(gid)
+
                         .date(new Date())
                         .build();
                 linkLocaleStatsMapper.shortLinkLocaleState(linkLocaleStatsDO);
@@ -141,7 +133,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
             LinkOsStatsDO linkOsStatsDO = LinkOsStatsDO.builder()
                     .os(statsRecord.getOs())
                     .cnt(1)
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .date(new Date())
                     .build();
@@ -149,7 +141,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
             LinkBrowserStatsDO linkBrowserStatsDO = LinkBrowserStatsDO.builder()
                     .browser(statsRecord.getBrowser())
                     .cnt(1)
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .date(new Date())
                     .build();
@@ -157,7 +149,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
             LinkDeviceStatsDO linkDeviceStatsDO = LinkDeviceStatsDO.builder()
                     .device(statsRecord.getDevice())
                     .cnt(1)
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .date(new Date())
                     .build();
@@ -165,7 +157,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
             LinkNetworkStatsDO linkNetworkStatsDO = LinkNetworkStatsDO.builder()
                     .network(statsRecord.getNetwork())
                     .cnt(1)
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .date(new Date())
                     .build();
@@ -178,7 +170,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                     .network(statsRecord.getNetwork())
                     .device(statsRecord.getDevice())
                     .locale(StrUtil.join("-", "中国", actualProvince, actualCity))
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .build();
             linkAccessLogsMapper.insert(linkAccessLogsDO);
@@ -187,7 +179,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                     .todayPv(1)
                     .todayUv(statsRecord.getUvFirstFlag() ? 1 : 0)
                     .todayUip(statsRecord.getUipFirstFlag() ? 1 : 0)
-                    .gid(gid)
+
                     .fullShortUrl(fullShortUrl)
                     .date(new Date())
                     .build();

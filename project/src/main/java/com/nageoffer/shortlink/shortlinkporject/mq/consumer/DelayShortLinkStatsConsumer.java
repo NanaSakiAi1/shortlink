@@ -55,7 +55,7 @@ public class DelayShortLinkStatsConsumer implements InitializingBean {
 
                                 }
                                 try{
-                                    shortLinkService.shortLinkStats(null, null, statsRecord);
+                                    shortLinkService.shortLinkStats(statsRecord);
                                 }catch (Throwable ex){
                                     messageQueueIdempotentHandler.delMessageProcessed(statsRecord.getKeys());
                                     log.error("记录短连接监控消费异常", ex);

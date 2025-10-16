@@ -27,10 +27,7 @@ public class LinkAccessStatsDO extends BaseDO {
      */
     @TableId(type = IdType.AUTO)
     private Long id;
-    /**
-     * 短链接id
-     */
-    private String gid;
+
 
     /**
      * 完整短链接
